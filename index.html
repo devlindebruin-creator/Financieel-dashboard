@@ -172,6 +172,11 @@
     gap: 20px;
     align-items: start;
   }
+  @media (max-width: 600px) {
+    .content-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
 
   .card {
     background: var(--surface);
@@ -408,24 +413,30 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 768px) {
-    .main { padding: 16px; }
+    body { overflow-x: hidden; }
+    .main { padding: 12px; }
     .header {
-      padding: 12px 16px;
-      flex-wrap: wrap;
+      padding: 12px;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 10px;
     }
     .header > div:last-child {
       width: 100%;
-      justify-content: space-between;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
-    .summary-grid { grid-template-columns: 1fr; gap: 10px; }
-    .content-grid { grid-template-columns: 1fr; }
-    .form-row { grid-template-columns: 1fr; }
     .data-toolbar { gap: 6px; }
     .toolbar-btn { padding: 6px 10px; font-size: 11px; }
-    .period-tabs { flex: 1; justify-content: flex-end; }
-    .period-tab { padding: 6px 12px; font-size: 12px; }
-    .setup-card { padding: 24px 20px; }
+    .period-tabs { width: 100%; display: flex; }
+    .period-tab { flex: 1; padding: 7px 0; font-size: 12px; text-align: center; }
+    .summary-grid { grid-template-columns: 1fr; gap: 10px; }
+    .content-grid { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; }
+    .form-row { grid-template-columns: 1fr; }
+    .setup-card { padding: 24px 16px; }
+    .period-nav { gap: 8px; }
+    .period-label { font-size: 14px; }
   }
 </style>
 </head>
