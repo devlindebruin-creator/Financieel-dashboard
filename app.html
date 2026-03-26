@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Geldstromen</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Geldstromen">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2ed;--surface:#fff;--surface2:#f0ece4;
+  --text:#1a1714;--text2:#6b6560;--text3:#9e9890;
+  --border:rgba(26,23,20,0.1);--border2:rgba(26,23,20,0.18);
+  --income:#2d6a4f;--income-light:#d8f3e6;
+  --expense:#c1440e;--expense-light:#fde8df;
+  --accent:#8b6914;--accent-light:#fdf0d5;
+  --r:12px;--rs:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#14120f;--surface:#1e1b17;--surface2:#2a2720;
+  --text:#f0ece4;--text2:#a09890;--text3:#6b6560;
+  --border:rgba(240,236,228,0.1);--border2:rgba(240,236,228,0.18);
+  --income:#52c49a;--income-light:#0d2b1f;
+  --expense:#f08060;--expense-light:#2b1408;
+  --accent:#d4a740;--accent-light:#2a2006;
+}}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
+h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px}
+.sync-label{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;margin-top:2px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background 0.3s;flex-shrink:0}
+.sync-dot.syncing{background:var(--accent);animation:pulse 1s infinite}
+.sync-dot.ok{background:var(--income)}
+.sync-dot.err{background:var(--expense)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nav-tabs{display:flex;background:var(--surface2);padding:3px;border-radius:var(--rs);gap:2px}
+.nav-tab{padding:6px 18px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.nav-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.12)}
+.toolbar-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border-radius:var(--rs);cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.toolbar-btn:hover{background:var(--surface2);color:var(--text)}
+.toolbar-btns{display:flex;gap:6px;align-items:center}
+.main{padding:24px;max-width:1100px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.period-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.period-nav{display:flex;align-items:center;gap:10px}
+.period-label{font-size:15px;font-weight:500;min-width:150px;text-align:center}
+.nav-btn{width:30px;height:30px;border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background 0.1s}
+.nav-btn:hover{background:var(--surface2)}
+.period-tabs{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:var(--rs)}
+.period-tab{padding:5px 14px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border-radius:5px;cursor:pointer;transition:all 0.15s}
+.period-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.summary-card .lbl{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.summary-card .amt{font-family:'DM Serif Display',serif;font-size:26px;line-height:1.1}
+.summary-card .amt.income{color:var(--income)}
+.summary-card .amt.expense{color:var(--expense)}
+.summary-card .amt.pos{color:var(--income)}
+.summary-card .amt.neg{color:var(--expense)}
+.summary-card .sub{font-size:11px;color:var(--text3);margin-top:3px}
+.content-grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-family:'DM Serif Display',serif;font-size:15px;font-weight:400}
+.card-body{padding:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
+input,select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);width:100%;transition:border-color 0.15s;outline:none;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--accent)}
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border2);border-radius:var(--rs);overflow:hidden}
+.type-btn{padding:8px;border:none;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.type-btn.active-income{background:var(--income-light);color:var(--income)}
+.type-btn.active-expense{background:var(--expense-light);color:var(--expense)}
+.submit-btn{width:100%;padding:10px;border:none;background:var(--text);color:var(--bg);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border-radius:var(--rs);cursor:pointer;transition:opacity 0.15s;margin-top:4px}
+.submit-btn:hover{opacity:0.82}
+.submit-btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.submit-btn.secondary:hover{opacity:1;background:var(--surface)}
+.tx-list{max-height:360px;overflow-y:auto}
+.tx-item{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.tx-item:last-child{border-bottom:none}
+.tx-item:hover{background:var(--surface2)}
+.tx-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--text2);margin-top:1px}
+.tx-amount{font-size:13px;font-weight:600;flex-shrink:0}
+.tx-amount.income{color:var(--income)}
+.tx-amount.expense{color:var(--expense)}
+.tx-actions{display:flex;gap:3px;flex-shrink:0}
+.tx-btn{width:22px;height:22px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:4px;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.1s}
+.tx-btn:hover{background:var(--surface2);color:var(--text)}
+.tx-btn.del:hover{background:var(--expense-light);color:var(--expense)}
+.empty-state{text-align:center;padding:36px 20px;color:var(--text2);font-size:13px}
+.empty-icon{font-size:26px;margin-bottom:8px}
+.chart-wrap{position:relative;height:200px;margin-bottom:10px}
+.chart-wrap.tall{height:240px}
+.cat-list{display:flex;flex-direction:column;gap:7px}
+.cat-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.cat-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.cat-name{flex:1;color:var(--text2)}
+.cat-bar-wrap{width:70px;height:4px;background:var(--surface2);border-radius:2px}
+.cat-bar{height:4px;border-radius:2px}
+.cat-amount{font-weight:500;min-width:56px;text-align:right}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.insight-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.insight-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.insight-card .i-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.insight-card .i-val{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.1}
+.insight-card .i-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.goal-item{padding:14px 0;border-bottom:1px solid var(--border)}
+.goal-item:last-child{border-bottom:none}
+.goal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.goal-name{font-size:13px;font-weight:500}
+.goal-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
+.goal-bar{height:6px;border-radius:3px;transition:width 0.4s ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border-radius:var(--r);padding:24px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{margin-bottom:16px;font-size:17px}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions .submit-btn{margin-top:0}
+.setup-overlay{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 24px;max-width:420px;width:100%}
+.setup-card h2{font-size:20px;margin-bottom:5px}
+.setup-sub{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.setup-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:13px;font-size:12px;color:var(--text2)}
+.setup-num{width:20px;height:20px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text);flex-shrink:0;margin-top:1px}
+.setup-step a{color:var(--accent);text-decoration:none}
+.setup-fields{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.setup-btn{width:100%;padding:11px;border:none;background:var(--text);color:var(--bg);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border-radius:var(--rs);cursor:pointer;transition:opacity 0.15s;margin-top:6px}
+.setup-btn:hover{opacity:0.82}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:var(--rs);font-size:13px;font-weight:500;opacity:0;transition:all 0.3s;z-index:300;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:700px){
+  body{overflow-x:hidden}
+  .main{padding:12px}
+  .header{padding:10px 12px}
+  .header-right{width:100%}
+  .nav-tabs{width:100%}
+  .nav-tab{flex:1;text-align:center;padding:6px 4px;font-size:12px}
+  .toolbar-btns{gap:4px}
+  .toolbar-btn{padding:5px 8px;font-size:11px}
+  .summary-grid{grid-template-columns:1fr;gap:10px}
+  .content-grid{grid-template-columns:1fr}
+  .analysis-grid{grid-template-columns:1fr}
+  .insight-row{grid-template-columns:1fr 1fr;gap:10px}
+  .form-row{grid-template-columns:1fr}
+  .period-row{flex-direction:column;align-items:flex-start}
+  .modal{padding:18px}
+  .setup-card{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="setup-overlay" id="setupOverlay" style="display:none">
+  <div class="setup-card">
+    <h2>Geldstromen instellen</h2>
+    <p class="setup-sub">Je data wordt opgeslagen in je eigen GitHub repository — gratis en privé. Eenmalig instellen, daarna werkt alles automatisch.</p>
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div>Ga naar <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a>, geef het een naam, vink alleen <strong>repo</strong> aan, klik <em>Generate token</em>.</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div>Kopieer het token (begint met <code style="font-family:monospace;background:var(--surface2);padding:1px 4px;border-radius:3px;font-size:12px">ghp_</code>) en plak hieronder.</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div>Vul je GitHub gebruikersnaam en de exacte naam van je repository in.</div>
+    </div>
+    <div class="setup-fields">
+      <div class="form-group">
+        <label>GitHub token</label>
+        <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gebruikersnaam</label>
+          <input type="text" id="setupUser" placeholder="devlindebruin-creator">
+        </div>
+        <div class="form-group">
+          <label>Repository naam</label>
+          <input type="text" id="setupRepo" placeholder="Financieel-dashboard">
+        </div>
+      </div>
+      <div id="setupError" style="font-size:12px;color:var(--expense);display:none;padding:8px 11px;background:var(--expense-light);border-radius:var(--rs)"></div>
+      <button class="setup-btn" onclick="saveSetup()">Verbinding testen &amp; opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal" style="display:none" onclick="if(event.target===this)closeEdit()">
+  <div class="modal">
+    <h3>Transactie bewerken</h3>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Type</label>
+      <div class="type-toggle">
+        <button class="type-btn active-expense" id="editBtnExpense" onclick="setEditType('expense')">Uitgave</button>
+        <button class="type-btn" id="editBtnIncome" onclick="setEditType('income')">Inkomsten</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bedrag (€)</label>
+        <input type="number" id="editAmount" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Datum</label>
+        <input type="date" id="editDate">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Categorie</label>
+      <select id="editCategory"></select>
+    </div>
+    <div class="form-group">
+      <label>Omschrijving</label>
+      <input type="text" id="editDesc">
+    </div>
+    <div class="modal-actions">
+      <button class="submit-btn" onclick="saveEdit()">Opslaan</button>
+      <button class="submit-btn secondary" onclick="closeEdit()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="goalModal" style="display:none" onclick="if(event.target===this)closeGoal()">
+  <div class="modal">
+    <h3>Spaardoel toevoegen</h3>
+    <div class="form-group" style="margin-bottom:10px">
+      <label>Naam</label>
+      <input type="text" id="goalName" placeholder="Bijv. Vakantie Italië">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Doelbedrag (€)</label>
+        <input type="number" id="goalTarget" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Huidig bedrag (€)</label>
+        <input type="number" id="goalCurrent" min="0" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="submit-btn" onclick="saveGoal()">Opslaan</button>
+      <button class="submit-btn secondary" onclick="closeGoal()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <h1>Geldstromen</h1>
+    <span class="sync-label"><span class="sync-dot" id="syncDot"></span><span id="syncText">laden...</span></span>
+  </div>
+  <div class="header-right">
+    <div class="toolbar-btns">
+      <button class="toolbar-btn" onclick="exportCSV()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h12M5 5v8" stroke="currentColor" stroke-width="1.3"/></svg>CSV
+      </button>
+      <button class="toolbar-btn" onclick="showSetup()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>GitHub instellen
+      </button>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="showPage('analyse')">Analyse</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="main">
+
+<div class="page active" id="page-dashboard">
+  <div class="period-row">
+    <div class="period-nav">
+      <button class="nav-btn" onclick="navigate(-1)">&#8592;</button>
+      <div class="period-label" id="periodLabel">–</div>
+      <button class="nav-btn" onclick="navigate(1)">&#8594;</button>
+    </div>
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="setPeriod('week')">Week</button>
+      <button class="period-tab" onclick="setPeriod('month')">Maand</button>
+      <button class="period-tab" onclick="setPeriod('year')">Jaar</button>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="lbl">Inkomsten</div><div class="amt income" id="totalIncome">€ 0,00</div><div class="sub" id="incomeCount">0 transacties</div></div>
+    <div class="summary-card"><div class="lbl">Uitgaven</div><div class="amt expense" id="totalExpense">€ 0,00</div><div class="sub" id="expenseCount">0 transacties</div></div>
+    <div class="summary-card"><div class="lbl">Saldo</div><div class="amt pos" id="totalBalance">€ 0,00</div><div class="sub">netto resultaat</div></div>
+  </div>
+
+  <div class="content-grid">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <div class="card-header"><h3>Verloop</h3></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 id="txListTitle">Transacties</h3></div>
+        <div class="tx-list" id="txList"><div class="empty-state"><div class="empty-icon">📭</div>Nog geen transacties</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <div class="card-header"><h3>Toevoegen</h3></div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Type</label>
+            <div class="type-toggle">
+              <button class="type-btn active-expense" id="btnExpense" onclick="setType('expense')">Uitgave</button>
+              <button class="type-btn" id="btnIncome" onclick="setType('income')">Inkomsten</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Bedrag (€)</label><input type="number" id="inputAmount" placeholder="0.00" min="0" step="0.01"></div>
+            <div class="form-group"><label>Datum</label><input type="date" id="inputDate"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px"><label>Categorie</label><select id="inputCategory"><option value="">Kies categorie...</option></select></div>
+          <div class="form-group" style="margin-bottom:12px"><label>Omschrijving</label><input type="text" id="inputDesc" placeholder="Bijv. boodschappen AH"></div>
+          <button class="submit-btn" onclick="addTransaction()">Toevoegen</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Uitgaven per categorie</h3></div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:150px;margin-bottom:14px"><canvas id="catChart"></canvas></div>
+          <div class="cat-list" id="catList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-analyse">
+  <div class="insight-row">
+    <div class="insight-card"><div class="i-label">Gem. maandelijks sparen</div><div class="i-val" id="avgSaving">€ 0</div><div class="i-sub">dit jaar</div></div>
+    <div class="insight-card"><div class="i-label">Hoogste categorie</div><div class="i-val" id="topCat" style="font-size:16px;margin-top:3px">–</div><div class="i-sub" id="topCatAmt">dit jaar</div></div>
+    <div class="insight-card"><div class="i-label">Spaarquote</div><div class="i-val" id="savingRate">0%</div><div class="i-sub">van inkomsten gespaard</div></div>
+    <div class="insight-card"><div class="i-label">Totaal transacties</div><div class="i-val" id="totalTxCount">0</div><div class="i-sub">alle tijd</div></div>
+  </div>
+
+  <div class="analysis-grid">
+    <div class="card">
+      <div class="card-header"><h3>Maandelijkse spaarlijn</h3></div>
+      <div class="card-body"><div class="chart-wrap tall"><canvas id="monthTrendChart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Inkomsten vs uitgaven</h3></div>
+      <div class="card-body"><div class="chart-wrap tall"><canvas id="incExpChart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Gemiddeld per categorie / maand</h3></div>
+      <div class="card-body"><div class="chart-wrap tall"><canvas id="avgCatChart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>Spaardoelen</h3>
+        <button class="toolbar-btn" onclick="showAddGoal()" style="font-size:11px;padding:4px 9px">+ Doel toevoegen</button>
+      </div>
+      <div class="card-body" id="goalsList"><div class="empty-state" style="padding:16px"><div class="empty-icon">🎯</div>Nog geen spaardoelen</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const CATS={
+  expense:[
+    {key:'boodschappen',label:'Boodschappen',color:'#2d6a4f'},
+    {key:'wonen',label:'Wonen & huur',color:'#8b6914'},
+    {key:'transport',label:'Transport',color:'#185fa5'},
+    {key:'sport',label:'Sport & training',color:'#3b6d11'},
+    {key:'eten_drinken',label:'Eten & drinken uit',color:'#c1440e'},
+    {key:'kleding',label:'Kleding',color:'#993556'},
+    {key:'gezondheid',label:'Gezondheid',color:'#0f6e56'},
+    {key:'entertainment',label:'Entertainment',color:'#7f77dd'},
+    {key:'abonnementen',label:'Abonnementen',color:'#533ab7'},
+    {key:'sparen',label:'Sparen & investeringen',color:'#185fa5'},
+    {key:'reizen',label:'Reizen & vakantie',color:'#ba7517'},
+    {key:'overig_uit',label:'Overig',color:'#6b6560'},
+  ],
+  income:[
+    {key:'salaris',label:'Salaris',color:'#2d6a4f'},
+    {key:'freelance',label:'Freelance / bijverdiensten',color:'#0f6e56'},
+    {key:'uitkering',label:'Uitkering / toeslagen',color:'#185fa5'},
+    {key:'rente',label:'Rente & dividend',color:'#8b6914'},
+    {key:'overig_in',label:'Overig inkomsten',color:'#6b6560'},
+  ]
+};
+
+let transactions=[],goals=[],ghConfig=null,dataSha=null,saveTimer=null;
+let currentPeriod='month',currentOffset=0,currentType='expense',editType='expense',editId=null;
+let CH={};
+
+function getConfig(){try{return JSON.parse(localStorage.getItem('gh_config')||'null');}catch(e){return null;}}
+function setSyncStatus(s,t){document.getElementById('syncDot').className='sync-dot '+s;document.getElementById('syncText').textContent=t;}
+function fmt(n){return '€\u00a0'+Math.abs(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function getCat(key){for(const t of['expense','income']){const c=CATS[t].find(c=>c.key===key);if(c)return c;}return{key,label:key,color:'#888'};}
+function showToast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2800);}
+function destroyChart(id){if(CH[id]){CH[id].destroy();CH[id]=null;}}
+
+function showSetup(){
+  const c=getConfig();
+  if(c){document.getElementById('setupToken').value=c.token||'';document.getElementById('setupUser').value=c.user||'';document.getElementById('setupRepo').value=c.repo||'';}
+  document.getElementById('setupError').style.display='none';
+  document.getElementById('setupOverlay').style.display='flex';
+}
+function hideSetup(){document.getElementById('setupOverlay').style.display='none';}
+
+async function saveSetup(){
+  const token=document.getElementById('setupToken').value.trim();
+  const user=document.getElementById('setupUser').value.trim();
+  const repo=document.getElementById('setupRepo').value.trim();
+  const err=document.getElementById('setupError');
+  err.style.display='none';
+  if(!token||!user||!repo){err.textContent='Vul alle velden in.';err.style.display='block';return;}
+  const btn=document.querySelector('.setup-btn');
+  btn.textContent='Testen...';btn.disabled=true;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${user}/${repo}`,{headers:{Authorization:'token '+token,Accept:'application/vnd.github.v3+json'}});
+    if(!r.ok)throw new Error('Repository niet gevonden of geen toegang (status '+r.status+')');
+    ghConfig={token,user,repo};
+    localStorage.setItem('gh_config',JSON.stringify(ghConfig));
+    hideSetup();
+    await loadData();
+    render();
+    setSyncStatus('ok','verbonden met GitHub');
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.textContent='Verbinding testen & opslaan';btn.disabled=false;
+}
+
+async function loadData(){
+  ghConfig=getConfig();
+  if(!ghConfig){transactions=[];goals=[];showSetup();return;}
+  setSyncStatus('syncing','laden...');
+  try{
+    const r=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,{headers:{Authorization:'token '+ghConfig.token,Accept:'application/vnd.github.v3+json'}});
+    if(r.status===404){transactions=[];goals=[];dataSha=null;setSyncStatus('ok','verbonden · nog geen data');return;}
+    if(!r.ok)throw new Error('status '+r.status);
+    const j=await r.json();
+    dataSha=j.sha;
+    const d=JSON.parse(atob(j.content.replace(/\n/g,'')));
+    transactions=d.transactions||[];
+    goals=d.goals||[];
+    setSyncStatus('ok','gesynchroniseerd');
+  }catch(e){
+    transactions=JSON.parse(localStorage.getItem('geldstromen_tx')||'[]');
+    goals=JSON.parse(localStorage.getItem('geldstromen_goals')||'[]');
+    setSyncStatus('err','offline — lokaal geladen');
+  }
+}
+
+async function saveData(){
+  localStorage.setItem('geldstromen_tx',JSON.stringify(transactions));
+  localStorage.setItem('geldstromen_goals',JSON.stringify(goals));
+  if(!ghConfig)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    setSyncStatus('syncing','opslaan...');
+    try{
+      const content=btoa(unescape(encodeURIComponent(JSON.stringify({version:1,updated:new Date().toISOString(),transactions,goals},null,2))));
+      const body={message:'Update '+new Date().toISOString().slice(0,10),content};
+      if(dataSha)body.sha=dataSha;
+      const r=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,{method:'PUT',headers:{Authorization:'token '+ghConfig.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok)throw new Error('status '+r.status);
+      dataSha=(await r.json()).content.sha;
+      setSyncStatus('ok','opgeslagen · '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}));
+    }catch(e){setSyncStatus('err','sync mislukt — lokaal opgeslagen');}
+  },800);
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((e,i)=>e.classList.toggle('active',['dashboard','analyse'][i]===p));
+  if(p==='analyse'){renderAnalysis();}
+}
+function setPeriod(p){currentPeriod=p;currentOffset=0;document.querySelectorAll('.period-tab').forEach((e,i)=>e.classList.toggle('active',['week','month','year'][i]===p));render();}
+function navigate(d){currentOffset+=d;render();}
+
+function getDateRange(){
+  const now=new Date();let start,end,label;
+  if(currentPeriod==='week'){
+    const d=new Date(now);d.setDate(d.getDate()-d.getDay()+1+currentOffset*7);
+    start=new Date(d);start.setHours(0,0,0,0);
+    end=new Date(start);end.setDate(end.getDate()+6);end.setHours(23,59,59,999);
+    label=start.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+' – '+end.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+  }else if(currentPeriod==='month'){
+    const y=now.getFullYear(),m=now.getMonth()+currentOffset;
+    const d=new Date(y,m,1);
+    start=new Date(d.getFullYear(),d.getMonth(),1);
+    end=new Date(d.getFullYear(),d.getMonth()+1,0,23,59,59,999);
+    label=start.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+    label=label.charAt(0).toUpperCase()+label.slice(1);
+  }else{
+    const y=now.getFullYear()+currentOffset;
+    start=new Date(y,0,1);end=new Date(y,11,31,23,59,59,999);label=String(y);
+  }
+  return{start,end,label};
+}
+function filtered(s,e){return transactions.filter(t=>{const d=new Date(t.date);return d>=s&&d<=e;});}
+
+function setType(t){
+  currentType=t;
+  document.getElementById('btnExpense').className='type-btn'+(t==='expense'?' active-expense':'');
+  document.getElementById('btnIncome').className='type-btn'+(t==='income'?' active-income':'');
+  fillCats('inputCategory',t);
+}
+function fillCats(id,type){
+  const s=document.getElementById(id);
+  s.innerHTML='<option value="">Kies categorie...</option>';
+  CATS[type].forEach(c=>{const o=document.createElement('option');o.value=c.key;o.textContent=c.label;s.appendChild(o);});
+}
+
+function addTransaction(){
+  const amount=parseFloat(document.getElementById('inputAmount').value);
+  const date=document.getElementById('inputDate').value;
+  const cat=document.getElementById('inputCategory').value;
+  const desc=document.getElementById('inputDesc').value.trim();
+  if(!amount||amount<=0){showToast('Vul een geldig bedrag in.');return;}
+  if(!date){showToast('Selecteer een datum.');return;}
+  if(!cat){showToast('Kies een categorie.');return;}
+  transactions.unshift({id:Date.now()+Math.random(),type:currentType,amount:Math.round(amount*100)/100,date,category:cat,desc:desc||getCat(cat).label});
+  saveData();
+  document.getElementById('inputAmount').value='';
+  document.getElementById('inputDesc').value='';
+  render();
+  showToast('Transactie toegevoegd');
+}
+
+function deleteTransaction(id){
+  if(!confirm('Transactie verwijderen?'))return;
+  transactions=transactions.filter(t=>t.id!==id);
+  saveData();render();
+}
+
+function editTransaction(id){
+  const tx=transactions.find(t=>t.id===id);if(!tx)return;
+  editId=id;editType=tx.type;
+  document.getElementById('editBtnExpense').className='type-btn'+(tx.type==='expense'?' active-expense':'');
+  document.getElementById('editBtnIncome').className='type-btn'+(tx.type==='income'?' active-income':'');
+  fillCats('editCategory',tx.type);
+  document.getElementById('editAmount').value=tx.amount;
+  document.getElementById('editDate').value=tx.date;
+  document.getElementById('editCategory').value=tx.category;
+  document.getElementById('editDesc').value=tx.desc;
+  document.getElementById('editModal').style.display='flex';
+}
+function setEditType(t){
+  editType=t;
+  document.getElementById('editBtnExpense').className='type-btn'+(t==='expense'?' active-expense':'');
+  document.getElementById('editBtnIncome').className='type-btn'+(t==='income'?' active-income':'');
+  fillCats('editCategory',t);
+}
+function saveEdit(){
+  const amount=parseFloat(document.getElementById('editAmount').value);
+  const date=document.getElementById('editDate').value;
+  const cat=document.getElementById('editCategory').value;
+  const desc=document.getElementById('editDesc').value.trim();
+  if(!amount||amount<=0||!date||!cat){showToast('Vul alle velden in.');return;}
+  const idx=transactions.findIndex(t=>t.id===editId);if(idx===-1)return;
+  transactions[idx]={...transactions[idx],type:editType,amount:Math.round(amount*100)/100,date,category:cat,desc:desc||getCat(cat).label};
+  saveData();closeEdit();render();showToast('Transactie bijgewerkt');
+}
+function closeEdit(){document.getElementById('editModal').style.display='none';editId=null;}
+
+function showAddGoal(){
+  document.getElementById('goalName').value='';
+  document.getElementById('goalTarget').value='';
+  document.getElementById('goalCurrent').value='0';
+  document.getElementById('goalModal').style.display='flex';
+}
+function closeGoal(){document.getElementById('goalModal').style.display='none';}
+function saveGoal(){
+  const name=document.getElementById('goalName').value.trim();
+  const target=parseFloat(document.getElementById('goalTarget').value);
+  const current=parseFloat(document.getElementById('goalCurrent').value)||0;
+  if(!name||!target||target<=0){showToast('Vul naam en doelbedrag in.');return;}
+  goals.push({id:Date.now(),name,target:Math.round(target*100)/100,current:Math.round(current*100)/100});
+  saveData();closeGoal();renderGoals();showToast('Spaardoel toegevoegd');
+}
+function deleteGoal(id){goals=goals.filter(g=>g.id!==id);saveData();renderGoals();}
+function updateGoal(id,val){
+  const g=goals.find(g=>g.id===id);if(!g)return;
+  g.current=Math.round(Math.max(0,parseFloat(val)||0)*100)/100;
+  saveData();renderGoals();
+}
+
+function render(){
+  const{start,end,label}=getDateRange();
+  document.getElementById('periodLabel').textContent=label;
+  const txs=filtered(start,end);
+  renderSummary(txs);renderTxList(txs);renderTrendChart(start,end);renderCatChart(txs);
+}
+
+function renderSummary(txs){
+  const inc=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal=inc-exp;
+  const ic=txs.filter(t=>t.type==='income').length,ec=txs.filter(t=>t.type==='expense').length;
+  document.getElementById('totalIncome').textContent=fmt(inc);
+  document.getElementById('totalExpense').textContent=fmt(exp);
+  document.getElementById('incomeCount').textContent=ic+' transactie'+(ic!==1?'s':'');
+  document.getElementById('expenseCount').textContent=ec+' transactie'+(ec!==1?'s':'');
+  const b=document.getElementById('totalBalance');
+  b.textContent=(bal<0?'– ':'')+fmt(bal);
+  b.className='amt '+(bal>=0?'pos':'neg');
+}
+
+function renderTxList(txs){
+  const el=document.getElementById('txList');
+  document.getElementById('txListTitle').textContent='Transacties ('+txs.length+')';
+  if(!txs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div>Nog geen transacties in deze periode</div>';return;}
+  el.innerHTML=[...txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>{
+    const cat=getCat(t.category);
+    const ds=new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+    return`<div class="tx-item">
+      <div class="tx-dot" style="background:${cat.color}"></div>
+      <div class="tx-info"><div class="tx-desc">${t.desc}</div><div class="tx-meta">${cat.label} · ${ds}</div></div>
+      <div class="tx-amount ${t.type}">${t.type==='income'?'+':'–'} ${fmt(t.amount)}</div>
+      <div class="tx-actions">
+        <button class="tx-btn" onclick="editTransaction(${t.id})" title="Bewerken">✎</button>
+        <button class="tx-btn del" onclick="deleteTransaction(${t.id})" title="Verwijderen">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrendChart(start,end){
+  destroyChart('trend');
+  let labels=[],iD=[],eD=[];
+  if(currentPeriod==='week'){
+    const days=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+    for(let i=0;i<7;i++){
+      const d=new Date(start);d.setDate(d.getDate()+i);
+      const ds=d.toISOString().slice(0,10);
+      labels.push(days[i]);
+      const dt=transactions.filter(t=>t.date===ds);
+      iD.push(dt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+      eD.push(dt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+    }
+  }else if(currentPeriod==='month'){
+    const dim=new Date(end.getFullYear(),end.getMonth()+1,0).getDate();
+    const g={};
+    transactions.filter(t=>{const d=new Date(t.date);return d>=start&&d<=end;}).forEach(t=>{
+      const w=Math.ceil(new Date(t.date).getDate()/7);
+      if(!g[w])g[w]={income:0,expense:0};g[w][t.type]+=t.amount;
+    });
+    for(let w=1;w<=Math.ceil(dim/7);w++){labels.push('Week '+w);iD.push(g[w]?.income||0);eD.push(g[w]?.expense||0);}
+  }else{
+    const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+    for(let m=0;m<12;m++){
+      labels.push(mn[m]);
+      const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===start.getFullYear()&&d.getMonth()===m;});
+      iD.push(mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+      eD.push(mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+    }
+  }
+  CH['trend']=new Chart(document.getElementById('trendChart'),{type:'bar',data:{labels,datasets:[
+    {label:'Inkomsten',data:iD,backgroundColor:'rgba(45,106,79,0.7)',borderRadius:4,borderSkipped:false},
+    {label:'Uitgaven',data:eD,backgroundColor:'rgba(193,68,14,0.7)',borderRadius:4,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:11},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+}
+
+function renderCatChart(txs){
+  destroyChart('cat');
+  const bycat={};
+  txs.filter(t=>t.type==='expense').forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
+  const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(!sorted.length){document.getElementById('catList').innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px 0">Geen uitgaven</div>';return;}
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  CH['cat']=new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>getCat(k).color),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})+' ('+Math.round(ctx.parsed/total*100)+'%)'}}}}}}); 
+  document.getElementById('catList').innerHTML=sorted.map(([k,v])=>{
+    const cat=getCat(k);const pct=Math.round(v/total*100);
+    return`<div class="cat-row"><div class="cat-dot" style="background:${cat.color}"></div><div class="cat-name">${cat.label}</div><div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${cat.color}"></div></div><div class="cat-amount">${fmt(v)}</div></div>`;
+  }).join('');
+}
+
+function renderAnalysis(){renderInsights();renderMonthTrend();renderIncExpChart();renderAvgCatChart();renderGoals();}
+
+function renderInsights(){
+  const yr=new Date().getFullYear();
+  const yt=transactions.filter(t=>new Date(t.date).getFullYear()===yr);
+  const months=new Set(yt.map(t=>new Date(t.date).getMonth())).size||1;
+  const ti=yt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const te=yt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const avg=(ti-te)/months;
+  const rate=ti>0?Math.round((ti-te)/ti*100):0;
+  document.getElementById('avgSaving').textContent=(avg<0?'– ':'')+fmt(avg);
+  document.getElementById('savingRate').textContent=rate+'%';
+  document.getElementById('totalTxCount').textContent=transactions.length;
+  const bycat={};
+  yt.filter(t=>t.type==='expense').forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
+  const top=Object.entries(bycat).sort((a,b)=>b[1]-a[1])[0];
+  if(top){document.getElementById('topCat').textContent=getCat(top[0]).label;document.getElementById('topCatAmt').textContent=fmt(top[1])+' dit jaar';}
+  else{document.getElementById('topCat').textContent='–';}
+}
+
+function renderMonthTrend(){
+  destroyChart('monthTrend');
+  const yr=new Date().getFullYear();
+  const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const saving=mn.map((_,m)=>{
+    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
+    return mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  });
+  CH['monthTrend']=new Chart(document.getElementById('monthTrendChart'),{type:'line',data:{labels:mn,datasets:[{label:'Spaarsaldo',data:saving,borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,0.1)',fill:true,tension:0.4,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:'#2d6a4f'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.parsed.y<0?'– ':'')+fmt(ctx.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:11},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+}
+
+function renderIncExpChart(){
+  destroyChart('incExp');
+  const yr=new Date().getFullYear();
+  const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const inc=[],exp=[];
+  mn.forEach((_,m)=>{
+    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
+    inc.push(mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+    exp.push(mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+  });
+  CH['incExp']=new Chart(document.getElementById('incExpChart'),{type:'bar',data:{labels:mn,datasets:[
+    {label:'Inkomsten',data:inc,backgroundColor:'rgba(45,106,79,0.75)',borderRadius:3,borderSkipped:false},
+    {label:'Uitgaven',data:exp,backgroundColor:'rgba(193,68,14,0.75)',borderRadius:3,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:10},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+}
+
+function renderAvgCatChart(){
+  destroyChart('avgCat');
+  const yr=new Date().getFullYear();
+  const yt=transactions.filter(t=>new Date(t.date).getFullYear()===yr&&t.type==='expense');
+  const months=new Set(yt.map(t=>new Date(t.date).getMonth())).size||1;
+  const bycat={};
+  yt.forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
+  const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  if(!sorted.length)return;
+  CH['avgCat']=new Chart(document.getElementById('avgCatChart'),{type:'bar',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{label:'Gem./maand',data:sorted.map(([,v])=>Math.round(v/months*100)/100),backgroundColor:sorted.map(([k])=>getCat(k).color),borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' €'+ctx.parsed.x.toLocaleString('nl-NL',{minimumFractionDigits:2})}}},scales:{x:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:10},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}},y:{grid:{display:false},ticks:{font:{size:10},color:'#9e9890'}}}}});
+}
+
+function renderGoals(){
+  const el=document.getElementById('goalsList');
+  if(!goals.length){el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">🎯</div>Nog geen spaardoelen<br><small style="color:var(--text3)">Klik op "+ Doel toevoegen"</small></div>';return;}
+  el.innerHTML=goals.map(g=>{
+    const pct=Math.min(100,Math.round(g.current/g.target*100));
+    const col=pct>=100?'#2d6a4f':pct>=50?'#8b6914':'#c1440e';
+    return`<div class="goal-item">
+      <div class="goal-header">
+        <div class="goal-name">${g.name}</div>
+        <button class="tx-btn del" onclick="deleteGoal(${g.id})">×</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">${fmt(g.current)} van ${fmt(g.target)}</span>
+        <span style="font-size:12px;font-weight:500;color:${col}">${pct}%</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+        <input type="number" min="0" step="0.01" value="${g.current}" style="width:100px;padding:5px 8px;font-size:12px" onchange="updateGoal(${g.id},this.value)">
+        <span style="font-size:11px;color:var(--text2)">huidig bedrag aanpassen</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportCSV(){
+  if(!transactions.length){showToast('Geen data om te exporteren.');return;}
+  const h=['Datum','Type','Categorie','Omschrijving','Bedrag'];
+  const rows=[...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(t=>[
+    t.date,t.type==='income'?'Inkomsten':'Uitgave',getCat(t.category).label,
+    '"'+(t.desc||'').replace(/"/g,'""')+'"',
+    (t.type==='expense'?'-':'')+t.amount.toFixed(2).replace('.',',')
+  ]);
+  const csv=[h,...rows].map(r=>r.join(';')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='geldstromen-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  URL.revokeObjectURL(url);showToast('CSV geëxporteerd');
+}
+
+fillCats('inputCategory','expense');
+document.getElementById('inputDate').value=new Date().toISOString().slice(0,10);
+loadData().then(()=>{render();});
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
