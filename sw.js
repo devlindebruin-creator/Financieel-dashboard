@@ -1,15 +1,12 @@
-const CACHE = 'geldstromen-v1';
+const CACHE = 'geldstromen-v2';
 const ASSETS = [
   './',
   './index.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
-  'https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap'
+  './manifest.json'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -21,15 +18,16 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Never intercept GitHub API calls or external resources
+  const url = e.request.url;
+  if(url.includes('api.github.com') || 
+     url.includes('cdnjs.cloudflare.com') || 
+     url.includes('fonts.googleapis.com') ||
+     url.includes('fonts.gstatic.com') ||
+     e.request.method !== 'GET') {
+    return;
+  }
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (!response || response.status !== 200 || response.type === 'opaque') return response;
-        const clone = response.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return response;
-      }).catch(() => cached);
-    })
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });

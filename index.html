@@ -797,7 +797,12 @@ function exportCSV(){
 fillCats('inputCategory','expense');
 document.getElementById('inputDate').value=new Date().toISOString().slice(0,10);
 loadData().then(()=>{render();});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+// Unregister any existing service workers to prevent interference with API calls
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(reg=>reg.unregister());
+  });
+}
 </script>
 </body>
 </html>
