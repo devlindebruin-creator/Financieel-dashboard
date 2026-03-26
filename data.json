@@ -1,15 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-03-26T13:57:39.344Z",
+  "updated": "2026-03-26T13:57:42.673Z",
   "transactions": [
-    {
-      "id": 1774528143535.8147,
-      "type": "expense",
-      "amount": 10,
-      "date": "2026-03-26",
-      "category": "boodschappen",
-      "desc": "a"
-    },
     {
       "id": 1774527274785.5352,
       "type": "expense",
