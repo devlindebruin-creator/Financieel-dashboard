@@ -1,15 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-03-26T12:18:58.727Z",
+  "updated": "2026-03-26T12:19:05.342Z",
   "transactions": [
-    {
-      "id": 1774527537917.4082,
-      "type": "income",
-      "amount": 10,
-      "date": "2026-03-26",
-      "category": "salaris",
-      "desc": "er"
-    },
     {
       "id": 1774527274785.5352,
       "type": "expense",
