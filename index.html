@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Geldstromen</title>
+<meta name="description" content="Persoonlijk financieel dashboard">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Geldstromen">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #f0ece4;
+    --text: #1a1714;
+    --text2: #6b6560;
+    --text3: #9e9890;
+    --border: rgba(26,23,20,0.1);
+    --border2: rgba(26,23,20,0.18);
+    --income: #2d6a4f;
+    --income-light: #d8f3e6;
+    --expense: #c1440e;
+    --expense-light: #fde8df;
+    --accent: #8b6914;
+    --accent-light: #fdf0d5;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14120f;
+      --surface: #1e1b17;
+      --surface2: #2a2720;
+      --text: #f0ece4;
+      --text2: #a09890;
+      --text3: #6b6560;
+      --border: rgba(240,236,228,0.1);
+      --border2: rgba(240,236,228,0.18);
+      --income: #52c49a;
+      --income-light: #0d2b1f;
+      --expense: #f08060;
+      --expense-light: #2b1408;
+      --accent: #d4a740;
+      --accent-light: #2a2006;
+    }
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 { font-size: 22px; }
+  .header-subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+  }
+  .period-tab {
+    padding: 6px 18px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .period-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  .main { padding: 28px 32px; max-width: 1100px; margin: 0 auto; }
+
+  .period-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .period-label {
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 160px;
+    text-align: center;
+  }
+  .nav-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: background 0.1s;
+  }
+  .nav-btn:hover { background: var(--surface2); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .summary-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .summary-card .amount {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    line-height: 1.1;
+  }
+  .summary-card .amount.income { color: var(--income); }
+  .summary-card .amount.expense { color: var(--expense); }
+  .summary-card .amount.balance.positive { color: var(--income); }
+  .summary-card .amount.balance.negative { color: var(--expense); }
+  .summary-card .sublabel {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header h3 { font-family: 'DM Serif Display', serif; font-size: 16px; font-weight: 400; }
+  .card-body { padding: 20px; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    width: 100%;
+    transition: border-color 0.15s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .type-btn {
+    padding: 9px;
+    border: none;
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .type-btn.active-income { background: var(--income-light); color: var(--income); }
+  .type-btn.active-expense { background: var(--expense-light); color: var(--expense); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    background: var(--text);
+    color: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { opacity: 0.82; }
+
+  .tx-list { max-height: 340px; overflow-y: auto; }
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-item:hover { background: var(--surface2); }
+  .tx-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .tx-amount { font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .tx-amount.income { color: var(--income); }
+  .tx-amount.expense { color: var(--expense); }
+  .tx-delete {
+    width: 22px; height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tx-delete:hover { background: var(--expense-light); color: var(--expense); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text2);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .chart-container {
+    position: relative;
+    height: 200px;
+    margin-bottom: 12px;
+  }
+
+  .cat-list { display: flex; flex-direction: column; gap: 8px; }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .cat-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .cat-name { flex: 1; color: var(--text2); }
+  .cat-bar-wrap { width: 80px; height: 4px; background: var(--surface2); border-radius: 2px; }
+  .cat-bar { height: 4px; border-radius: 2px; }
+  .cat-amount { font-weight: 500; min-width: 60px; text-align: right; }
+
+  .data-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .toolbar-btn:hover { background: var(--surface2); color: var(--text); }
+  .toolbar-btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .toolbar-btn.primary:hover { opacity: 0.82; }
+  .toolbar-btn svg { flex-shrink: 0; }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 768px) {
+    .main { padding: 16px; }
+    .header { padding: 14px 16px; }
+    .summary-grid { grid-template-columns: 1fr; gap: 10px; }
+    .content-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .data-toolbar { gap: 6px; }
+    .toolbar-btn { padding: 6px 10px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Geldstromen</h1>
+    <div class="header-subtitle">Persoonlijk financieel overzicht</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div class="data-toolbar">
+      <button class="toolbar-btn" onclick="exportJSON()" title="Sla alle data op als JSON-bestand">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Opslaan
+      </button>
+      <button class="toolbar-btn" onclick="document.getElementById('importInput').click()" title="Laad eerder opgeslagen JSON-bestand">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><path d="M7 9V1M4 4l3-3 3 3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Laden
+      </button>
+      <button class="toolbar-btn" onclick="exportCSV()" title="Exporteer als CSV voor Excel">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h12M5 5v8" stroke="currentColor" stroke-width="1.3"/></svg>
+        CSV
+      </button>
+    </div>
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="setPeriod('week')">Week</button>
+      <button class="period-tab" onclick="setPeriod('month')">Maand</button>
+      <button class="period-tab" onclick="setPeriod('year')">Jaar</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+<div class="toast" id="toast"></div>
+
+<div class="main">
+  <div class="period-nav">
+    <button class="nav-btn" onclick="navigate(-1)">&#8592;</button>
+    <div class="period-label" id="periodLabel">–</div>
+    <button class="nav-btn" onclick="navigate(1)">&#8594;</button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="label">Inkomsten</div>
+      <div class="amount income" id="totalIncome">€ 0</div>
+      <div class="sublabel" id="incomeCount">0 transacties</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Uitgaven</div>
+      <div class="amount expense" id="totalExpense">€ 0</div>
+      <div class="sublabel" id="expenseCount">0 transacties</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Saldo</div>
+      <div class="amount balance positive" id="totalBalance">€ 0</div>
+      <div class="sublabel" id="balanceLabel">netto resultaat</div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Verloop</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 id="txListTitle">Transacties</h3>
+        </div>
+        <div class="tx-list" id="txList">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            Nog geen transacties in deze periode
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Toevoegen</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label>Type</label>
+            <div class="type-toggle">
+              <button class="type-btn active-expense" id="btnExpense" onclick="setType('expense')">Uitgave</button>
+              <button class="type-btn" id="btnIncome" onclick="setType('income')">Inkomsten</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bedrag (€)</label>
+              <input type="number" id="inputAmount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Datum</label>
+              <input type="date" id="inputDate">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label>Categorie</label>
+            <select id="inputCategory">
+              <option value="">Kies categorie...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label>Omschrijving</label>
+            <input type="text" id="inputDesc" placeholder="Bijv. boodschappen Albert Heijn">
+          </div>
+          <button class="submit-btn" onclick="addTransaction()">Toevoegen</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Uitgaven per categorie</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-container" style="height: 160px; margin-bottom: 16px;">
+            <canvas id="catChart"></canvas>
+          </div>
+          <div class="cat-list" id="catList"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = {
+  expense: [
+    { key: 'boodschappen', label: 'Boodschappen', color: '#2d6a4f' },
+    { key: 'wonen', label: 'Wonen & huur', color: '#8b6914' },
+    { key: 'transport', label: 'Transport', color: '#185fa5' },
+    { key: 'sport', label: 'Sport & training', color: '#3b6d11' },
+    { key: 'eten_drinken', label: 'Eten & drinken uit', color: '#c1440e' },
+    { key: 'kleding', label: 'Kleding', color: '#993556' },
+    { key: 'gezondheid', label: 'Gezondheid', color: '#0f6e56' },
+    { key: 'entertainment', label: 'Entertainment', color: '#7f77dd' },
+    { key: 'abonnementen', label: 'Abonnementen', color: '#533ab7' },
+    { key: 'sparen', label: 'Sparen & investeringen', color: '#185fa5' },
+    { key: 'reizen', label: 'Reizen & vakantie', color: '#ba7517' },
+    { key: 'overig_uit', label: 'Overig', color: '#6b6560' },
+  ],
+  income: [
+    { key: 'salaris', label: 'Salaris', color: '#2d6a4f' },
+    { key: 'freelance', label: 'Freelance / bijverdiensten', color: '#0f6e56' },
+    { key: 'uitkering', label: 'Uitkering / toeslagen', color: '#185fa5' },
+    { key: 'rente', label: 'Rente & dividend', color: '#8b6914' },
+    { key: 'overig_in', label: 'Overig inkomsten', color: '#6b6560' },
+  ]
+};
+
+let currentPeriod = 'month';
+let currentOffset = 0;
+let currentType = 'expense';
+let transactions = [];
+let trendChart = null;
+let catChart = null;
+
+function loadData() {
+  try { transactions = JSON.parse(localStorage.getItem('geldstromen_tx') || '[]'); }
+  catch(e) { transactions = []; }
+}
+function saveData() {
+  localStorage.setItem('geldstromen_tx', JSON.stringify(transactions));
+}
+
+function fmt(n) {
+  return '€\u00a0' + Math.abs(n).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getDateRange() {
+  const now = new Date();
+  let start, end, label;
+  if (currentPeriod === 'week') {
+    const d = new Date(now);
+    d.setDate(d.getDate() - d.getDay() + 1 + currentOffset * 7);
+    start = new Date(d); start.setHours(0,0,0,0);
+    end = new Date(start); end.setDate(end.getDate() + 6); end.setHours(23,59,59,999);
+    const opts = { day: 'numeric', month: 'short' };
+    label = start.toLocaleDateString('nl-NL', opts) + ' – ' + end.toLocaleDateString('nl-NL', opts);
+  } else if (currentPeriod === 'month') {
+    const y = now.getFullYear(), m = now.getMonth() + currentOffset;
+    const d = new Date(y, m, 1);
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    label = start.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+  } else {
+    const y = now.getFullYear() + currentOffset;
+    start = new Date(y, 0, 1);
+    end = new Date(y, 11, 31, 23, 59, 59, 999);
+    label = String(y);
+  }
+  return { start, end, label };
+}
+
+function getFilteredTx(start, end) {
+  return transactions.filter(t => {
+    const d = new Date(t.date);
+    return d >= start && d <= end;
+  });
+}
+
+function setPeriod(p) {
+  currentPeriod = p;
+  currentOffset = 0;
+  document.querySelectorAll('.period-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['week','month','year'][i] === p);
+  });
+  render();
+}
+
+function navigate(dir) {
+  currentOffset += dir;
+  render();
+}
+
+function setType(t) {
+  currentType = t;
+  document.getElementById('btnExpense').className = 'type-btn' + (t === 'expense' ? ' active-expense' : '');
+  document.getElementById('btnIncome').className = 'type-btn' + (t === 'income' ? ' active-income' : '');
+  updateCategoryOptions();
+}
+
+function updateCategoryOptions() {
+  const sel = document.getElementById('inputCategory');
+  sel.innerHTML = '<option value="">Kies categorie...</option>';
+  CATEGORIES[currentType].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.key;
+    opt.textContent = c.label;
+    sel.appendChild(opt);
+  });
+}
+
+function getCatInfo(key) {
+  for (const t of ['expense','income']) {
+    const c = CATEGORIES[t].find(c => c.key === key);
+    if (c) return c;
+  }
+  return { key, label: key, color: '#888' };
+}
+
+function addTransaction() {
+  const amount = parseFloat(document.getElementById('inputAmount').value);
+  const date = document.getElementById('inputDate').value;
+  const cat = document.getElementById('inputCategory').value;
+  const desc = document.getElementById('inputDesc').value.trim();
+
+  if (!amount || amount <= 0) { alert('Vul een geldig bedrag in.'); return; }
+  if (!date) { alert('Selecteer een datum.'); return; }
+  if (!cat) { alert('Kies een categorie.'); return; }
+
+  const tx = {
+    id: Date.now() + Math.random(),
+    type: currentType,
+    amount: Math.round(amount * 100) / 100,
+    date,
+    category: cat,
+    desc: desc || getCatInfo(cat).label
+  };
+  transactions.unshift(tx);
+  saveData();
+
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputDesc').value = '';
+  render();
+}
+
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  saveData();
+  render();
+}
+
+function renderSummary(txs) {
+  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const balance = income - expense;
+  const incomeCount = txs.filter(t => t.type === 'income').length;
+  const expenseCount = txs.filter(t => t.type === 'expense').length;
+
+  document.getElementById('totalIncome').textContent = fmt(income);
+  document.getElementById('totalExpense').textContent = fmt(expense);
+  document.getElementById('incomeCount').textContent = incomeCount + ' transactie' + (incomeCount !== 1 ? 's' : '');
+  document.getElementById('expenseCount').textContent = expenseCount + ' transactie' + (expenseCount !== 1 ? 's' : '');
+
+  const balEl = document.getElementById('totalBalance');
+  balEl.textContent = (balance < 0 ? '– ' : '') + fmt(balance);
+  balEl.className = 'amount balance ' + (balance >= 0 ? 'positive' : 'negative');
+}
+
+function renderTxList(txs) {
+  const el = document.getElementById('txList');
+  document.getElementById('txListTitle').textContent = 'Transacties (' + txs.length + ')';
+  if (!txs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>Nog geen transacties in deze periode</div>';
+    return;
+  }
+  const sorted = [...txs].sort((a, b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = sorted.map(t => {
+    const cat = getCatInfo(t.category);
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+    return `<div class="tx-item">
+      <div class="tx-dot" style="background:${cat.color}"></div>
+      <div class="tx-info">
+        <div class="tx-desc">${t.desc}</div>
+        <div class="tx-meta">${cat.label} · ${dateStr}</div>
+      </div>
+      <div class="tx-amount ${t.type}">${t.type === 'income' ? '+' : '–'} ${fmt(t.amount)}</div>
+      <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Verwijderen">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderTrendChart(start, end) {
+  const canvas = document.getElementById('trendChart');
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+
+  let labels = [], incomeData = [], expenseData = [];
+
+  if (currentPeriod === 'week') {
+    const days = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const dayStr = d.toISOString().slice(0,10);
+      labels.push(days[i]);
+      const dayTx = transactions.filter(t => t.date === dayStr);
+      incomeData.push(dayTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0));
+      expenseData.push(dayTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0));
+    }
+  } else if (currentPeriod === 'month') {
+    const daysInMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+    const grouped = {};
+    transactions.filter(t => { const d = new Date(t.date); return d >= start && d <= end; })
+      .forEach(t => {
+        const w = Math.ceil(new Date(t.date).getDate() / 7);
+        if (!grouped[w]) grouped[w] = { income: 0, expense: 0 };
+        grouped[w][t.type] += t.amount;
+      });
+    const numWeeks = Math.ceil(daysInMonth / 7);
+    for (let w = 1; w <= numWeeks; w++) {
+      labels.push('Week ' + w);
+      incomeData.push(grouped[w]?.income || 0);
+      expenseData.push(grouped[w]?.expense || 0);
+    }
+  } else {
+    const monthNames = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+    for (let m = 0; m < 12; m++) {
+      labels.push(monthNames[m]);
+      const mTx = transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === start.getFullYear() && d.getMonth() === m;
+      });
+      incomeData.push(mTx.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0));
+      expenseData.push(mTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0));
+    }
+  }
+
+  trendChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Inkomsten', data: incomeData, backgroundColor: 'rgba(45,106,79,0.7)', borderRadius: 4, borderSkipped: false },
+        { label: 'Uitgaven', data: expenseData, backgroundColor: 'rgba(193,68,14,0.7)', borderRadius: 4, borderSkipped: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' })
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#9e9890' } },
+        y: {
+          grid: { color: 'rgba(128,128,128,0.12)' },
+          ticks: {
+            font: { size: 11 }, color: '#9e9890',
+            callback: v => '€' + v.toLocaleString('nl-NL')
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderCatChart(txs) {
+  const canvas = document.getElementById('catChart');
+  if (catChart) { catChart.destroy(); catChart = null; }
+
+  const expenses = txs.filter(t => t.type === 'expense');
+  const bycat = {};
+  expenses.forEach(t => {
+    bycat[t.category] = (bycat[t.category] || 0) + t.amount;
+  });
+
+  const sorted = Object.entries(bycat).sort((a,b) => b[1]-a[1]).slice(0, 6);
+  if (!sorted.length) {
+    document.getElementById('catList').innerHTML = '<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px 0">Geen uitgaven in deze periode</div>';
+    return;
+  }
+
+  const labels = sorted.map(([k]) => getCatInfo(k).label);
+  const data = sorted.map(([,v]) => v);
+  const colors = sorted.map(([k]) => getCatInfo(k).color);
+  const total = data.reduce((s,v) => s+v, 0);
+
+  catChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ' + ctx.parsed.toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' }) + ' (' + Math.round(ctx.parsed / total * 100) + '%)'
+          }
+        }
+      }
+    }
+  });
+
+  const listEl = document.getElementById('catList');
+  listEl.innerHTML = sorted.map(([k, v]) => {
+    const cat = getCatInfo(k);
+    const pct = Math.round(v / total * 100);
+    return `<div class="cat-row">
+      <div class="cat-dot" style="background:${cat.color}"></div>
+      <div class="cat-name">${cat.label}</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${cat.color}"></div></div>
+      <div class="cat-amount">${fmt(v)}</div>
+    </div>`;
+  }).join('');
+}
+
+function render() {
+  const { start, end, label } = getDateRange();
+  document.getElementById('periodLabel').textContent = label;
+  const txs = getFilteredTx(start, end);
+  renderSummary(txs);
+  renderTxList(txs);
+  renderTrendChart(start, end);
+  renderCatChart(txs);
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function exportJSON() {
+  if (!transactions.length) { showToast('Geen data om op te slaan.'); return; }
+  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), transactions }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'geldstromen-' + date + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data opgeslagen als geldstromen-' + date + '.json');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const imported = parsed.transactions || parsed;
+      if (!Array.isArray(imported)) throw new Error('Ongeldig formaat');
+      const count = imported.length;
+      transactions = imported;
+      saveData();
+      render();
+      showToast(count + ' transacties geladen uit ' + file.name);
+    } catch(err) {
+      showToast('Fout bij laden: ongeldig bestandsformaat.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function exportCSV() {
+  if (!transactions.length) { showToast('Geen data om te exporteren.'); return; }
+  const header = ['Datum', 'Type', 'Categorie', 'Omschrijving', 'Bedrag'];
+  const rows = [...transactions]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .map(t => [
+      t.date,
+      t.type === 'income' ? 'Inkomsten' : 'Uitgave',
+      getCatInfo(t.category).label,
+      '"' + (t.desc || '').replace(/"/g, '""') + '"',
+      (t.type === 'expense' ? '-' : '') + t.amount.toFixed(2).replace('.', ',')
+    ]);
+  const csv = [header, ...rows].map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'geldstromen-' + date + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV geëxporteerd — klaar voor Excel');
+}
+
+// Init
+loadData();
+updateCategoryOptions();
+const today = new Date().toISOString().slice(0, 10);
+document.getElementById('inputDate').value = today;
+render();
+
+// Service Worker registreren voor offline gebruik
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
