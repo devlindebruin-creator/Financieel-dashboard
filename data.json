@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-26T10:49:08.846Z",
+  "updated": "2026-03-26T12:08:35.608Z",
   "transactions": [
+    {
+      "id": 1774526914803.893,
+      "type": "income",
+      "amount": 500,
+      "date": "2026-03-25",
+      "category": "salaris",
+      "desc": "boodschappenbudget"
+    },
     {
       "id": 1774520597659.8645,
       "type": "expense",
@@ -10,5 +18,6 @@
       "category": "boodschappen",
       "desc": "Boodschappen AH"
     }
-  ]
+  ],
+  "goals": []
 }
