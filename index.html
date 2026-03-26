@@ -684,7 +684,7 @@ function renderCatChart(txs){
   const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,6);
   if(!sorted.length){document.getElementById('catList').innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px 0">Geen uitgaven</div>';return;}
   const total=sorted.reduce((s,[,v])=>s+v,0);
-  CH['cat']=new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>getCat(k).color),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})+' ('+Math.round(ctx.parsed/total*100)+'%)'}}}}}}); 
+  CH['cat']=new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>getCat(k).color),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})+' ('+Math.round(ctx.parsed/total*100)+'%)'}}}}});
   document.getElementById('catList').innerHTML=sorted.map(([k,v])=>{
     const cat=getCat(k);const pct=Math.round(v/total*100);
     return`<div class="cat-row"><div class="cat-dot" style="background:${cat.color}"></div><div class="cat-name">${cat.label}</div><div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${cat.color}"></div></div><div class="cat-amount">${fmt(v)}</div></div>`;
