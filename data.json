@@ -1,15 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-03-26T13:57:28.852Z",
+  "updated": "2026-03-26T13:57:39.344Z",
   "transactions": [
-    {
-      "id": 1774533448046.3513,
-      "type": "expense",
-      "amount": 10,
-      "date": "2026-03-26",
-      "category": "wonen",
-      "desc": "l"
-    },
     {
       "id": 1774528143535.8147,
       "type": "expense",
