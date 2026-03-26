@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-26T10:47:41.434Z",
+  "updated": "2026-03-26T10:48:34.617Z",
   "transactions": [
+    {
+      "id": 1774522113810.9084,
+      "type": "expense",
+      "amount": 10,
+      "date": "2026-03-25",
+      "category": "entertainment",
+      "desc": "espn"
+    },
     {
       "id": 1774520597659.8645,
       "type": "expense",
