@@ -316,12 +316,57 @@
   .cat-bar { height: 4px; border-radius: 2px; }
   .cat-amount { font-weight: 500; min-width: 60px; text-align: right; }
 
-  .data-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+  .setup-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
   }
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    max-width: 440px;
+    width: 100%;
+  }
+  .setup-card h2 { font-size: 22px; margin-bottom: 6px; }
+  .setup-card .setup-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+  .setup-step {
+    display: flex; gap: 12px; align-items: flex-start;
+    margin-bottom: 16px; font-size: 13px; color: var(--text2);
+  }
+  .setup-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: var(--text);
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .setup-step a { color: var(--accent); text-decoration: none; }
+  .setup-step a:hover { text-decoration: underline; }
+  .setup-fields { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .setup-btn {
+    width: 100%; padding: 12px;
+    border: none; background: var(--text); color: var(--bg);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    border-radius: var(--radius-sm); cursor: pointer;
+    transition: opacity 0.15s; margin-top: 8px;
+  }
+  .setup-btn:hover { opacity: 0.82; }
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text3); display: inline-block; margin-right: 5px;
+    transition: background 0.3s;
+  }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+  .sync-dot.ok { background: var(--income); }
+  .sync-dot.err { background: var(--expense); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .sync-label { font-size: 11px; color: var(--text2); display: flex; align-items: center; }
+
+  .data-toolbar {
   .toolbar-btn {
     display: flex;
     align-items: center;
@@ -373,24 +418,59 @@
 </head>
 <body>
 
+<div class="setup-overlay" id="setupOverlay" style="display:none">
+  <div class="setup-card">
+    <h2>Geldstromen instellen</h2>
+    <p class="setup-sub">Je data wordt opgeslagen in je eigen GitHub repository — gratis en privé. Eenmalig instellen, daarna werkt alles automatisch.</p>
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div>Ga naar <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a>, geef het token een naam (bijv. "Geldstromen"), selecteer alleen <strong>repo</strong> scope, en klik <em>Generate token</em>.</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div>Kopieer het token (begint met <code style="font-family:monospace;font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:4px">ghp_</code>) en plak het hieronder.</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div>Vul je GitHub gebruikersnaam en de naam van je repository in (bijv. <em>Financieel-dashboard</em>).</div>
+    </div>
+    <div class="setup-fields">
+      <div class="form-group">
+        <label>GitHub token</label>
+        <input type="password" id="setupToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gebruikersnaam</label>
+          <input type="text" id="setupUser" placeholder="devlindebruin-creator">
+        </div>
+        <div class="form-group">
+          <label>Repository naam</label>
+          <input type="text" id="setupRepo" placeholder="Financieel-dashboard">
+        </div>
+      </div>
+      <div id="setupError" style="font-size:12px;color:var(--expense);display:none;padding:8px 12px;background:var(--expense-light);border-radius:var(--radius-sm)"></div>
+      <button class="setup-btn" onclick="saveSetup()">Verbinding testen & opslaan</button>
+    </div>
+  </div>
+</div>
+
 <div class="header">
   <div>
     <h1>Geldstromen</h1>
-    <div class="header-subtitle">Persoonlijk financieel overzicht</div>
+    <div class="header-subtitle" id="syncStatus">
+      <span class="sync-label"><span class="sync-dot" id="syncDot"></span><span id="syncText">verbonden</span></span>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
     <div class="data-toolbar">
-      <button class="toolbar-btn" onclick="exportJSON()" title="Sla alle data op als JSON-bestand">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Opslaan
-      </button>
-      <button class="toolbar-btn" onclick="document.getElementById('importInput').click()" title="Laad eerder opgeslagen JSON-bestand">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><path d="M7 9V1M4 4l3-3 3 3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Laden
-      </button>
       <button class="toolbar-btn" onclick="exportCSV()" title="Exporteer als CSV voor Excel">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h12M5 5v8" stroke="currentColor" stroke-width="1.3"/></svg>
         CSV
+      </button>
+      <button class="toolbar-btn" onclick="showSetup()" title="GitHub instellingen wijzigen">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        GitHub instellen
       </button>
     </div>
     <div class="period-tabs">
@@ -542,12 +622,130 @@ let transactions = [];
 let trendChart = null;
 let catChart = null;
 
-function loadData() {
-  try { transactions = JSON.parse(localStorage.getItem('geldstromen_tx') || '[]'); }
-  catch(e) { transactions = []; }
+let ghConfig = null;
+let dataSha = null;
+let saveTimer = null;
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem('gh_config') || 'null'); }
+  catch(e) { return null; }
 }
-function saveData() {
+
+function showSetup() {
+  const cfg = getConfig();
+  if (cfg) {
+    document.getElementById('setupToken').value = cfg.token || '';
+    document.getElementById('setupUser').value = cfg.user || '';
+    document.getElementById('setupRepo').value = cfg.repo || '';
+  }
+  document.getElementById('setupError').style.display = 'none';
+  document.getElementById('setupOverlay').style.display = 'flex';
+}
+
+function hideSetup() {
+  document.getElementById('setupOverlay').style.display = 'none';
+}
+
+async function saveSetup() {
+  const token = document.getElementById('setupToken').value.trim();
+  const user = document.getElementById('setupUser').value.trim();
+  const repo = document.getElementById('setupRepo').value.trim();
+  const errEl = document.getElementById('setupError');
+  errEl.style.display = 'none';
+
+  if (!token || !user || !repo) {
+    errEl.textContent = 'Vul alle velden in.';
+    errEl.style.display = 'block'; return;
+  }
+
+  const btn = document.querySelector('.setup-btn');
+  btn.textContent = 'Verbinding testen...'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${user}/${repo}`, {
+      headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) throw new Error('Repository niet gevonden of geen toegang (status ' + res.status + ')');
+    ghConfig = { token, user, repo };
+    localStorage.setItem('gh_config', JSON.stringify(ghConfig));
+    hideSetup();
+    await loadData();
+    render();
+    setSyncStatus('ok', 'verbonden met GitHub');
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.textContent = 'Verbinding testen & opslaan'; btn.disabled = false;
+}
+
+function setSyncStatus(state, text) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = text;
+}
+
+async function loadData() {
+  ghConfig = getConfig();
+  if (!ghConfig) {
+    transactions = [];
+    showSetup();
+    return;
+  }
+
+  setSyncStatus('syncing', 'laden...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,
+      { headers: { Authorization: 'token ' + ghConfig.token, Accept: 'application/vnd.github.v3+json' } }
+    );
+    if (res.status === 404) {
+      transactions = [];
+      dataSha = null;
+      setSyncStatus('ok', 'verbonden · geen data nog');
+      return;
+    }
+    if (!res.ok) throw new Error('Laad fout ' + res.status);
+    const json = await res.json();
+    dataSha = json.sha;
+    const decoded = JSON.parse(atob(json.content.replace(/\n/g, '')));
+    transactions = decoded.transactions || decoded || [];
+    setSyncStatus('ok', 'gesynchroniseerd');
+  } catch(e) {
+    const local = localStorage.getItem('geldstromen_tx');
+    transactions = local ? JSON.parse(local) : [];
+    setSyncStatus('err', 'offline — lokaal geladen');
+    showToast('Geen verbinding — lokale data geladen');
+  }
+}
+
+async function saveData() {
   localStorage.setItem('geldstromen_tx', JSON.stringify(transactions));
+  if (!ghConfig) return;
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    setSyncStatus('syncing', 'opslaan...');
+    try {
+      const content = btoa(unescape(encodeURIComponent(
+        JSON.stringify({ version: 1, updated: new Date().toISOString(), transactions }, null, 2)
+      )));
+      const body = { message: 'Update data ' + new Date().toISOString().slice(0,10), content };
+      if (dataSha) body.sha = dataSha;
+
+      const res = await fetch(
+        `https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,
+        { method: 'PUT', headers: { Authorization: 'token ' + ghConfig.token, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (!res.ok) throw new Error('Opslaan mislukt ' + res.status);
+      const json = await res.json();
+      dataSha = json.content.sha;
+      setSyncStatus('ok', 'opgeslagen · ' + new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'}));
+    } catch(e) {
+      setSyncStatus('err', 'sync mislukt — lokaal opgeslagen');
+    }
+  }, 800);
 }
 
 function fmt(n) {
@@ -905,11 +1103,10 @@ function exportCSV() {
 }
 
 // Init
-loadData();
 updateCategoryOptions();
 const today = new Date().toISOString().slice(0, 10);
 document.getElementById('inputDate').value = today;
-render();
+loadData().then(() => render());
 
 // Service Worker registreren voor offline gebruik
 if ('serviceWorker' in navigator) {
