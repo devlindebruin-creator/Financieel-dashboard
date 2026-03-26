@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "updated": "2026-03-26T10:22:00.030Z",
+  "transactions": [
+    {
+      "id": 1774520519223.0273,
+      "type": "expense",
+      "amount": 55.26,
+      "date": "2026-03-26",
+      "category": "boodschappen",
+      "desc": "Boodschappen AH"
+    }
+  ]
+}
