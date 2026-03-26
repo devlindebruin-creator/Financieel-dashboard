@@ -1,23 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-03-26T10:48:50.317Z",
+  "updated": "2026-03-26T10:49:08.846Z",
   "transactions": [
-    {
-      "id": 1774522129512.829,
-      "type": "income",
-      "amount": 100,
-      "date": "2026-03-25",
-      "category": "salaris",
-      "desc": "Salaris"
-    },
-    {
-      "id": 1774522113810.9084,
-      "type": "expense",
-      "amount": 10,
-      "date": "2026-03-25",
-      "category": "entertainment",
-      "desc": "espn"
-    },
     {
       "id": 1774520597659.8645,
       "type": "expense",
