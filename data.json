@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-26T17:58:16.236Z",
+  "updated": "2026-03-26T17:58:32.530Z",
   "transactions": [
+    {
+      "id": 1774547911495.023,
+      "type": "expense",
+      "amount": 37.35,
+      "date": "2026-03-26",
+      "category": "boodschappen",
+      "desc": "Etos"
+    },
     {
       "id": 1774547895429.0464,
       "type": "expense",
