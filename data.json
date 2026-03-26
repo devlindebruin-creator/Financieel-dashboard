@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-26T10:23:18.468Z",
+  "updated": "2026-03-26T10:47:17.621Z",
   "transactions": [
+    {
+      "id": 1774522036814.1443,
+      "type": "income",
+      "amount": 10,
+      "date": "2026-03-25",
+      "category": "overig_in",
+      "desc": "tikkie"
+    },
     {
       "id": 1774520597659.8645,
       "type": "expense",
