@@ -1,1 +1,15 @@
-{"version":1,"transactions":[],"goals":[]}
+{
+  "version": 1,
+  "updated": "2026-03-26T12:14:19.903Z",
+  "transactions": [
+    {
+      "id": 1774527259097.666,
+      "type": "income",
+      "amount": 500,
+      "date": "2026-03-25",
+      "category": "salaris",
+      "desc": "budget"
+    }
+  ],
+  "goals": []
+}
