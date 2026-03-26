@@ -473,6 +473,11 @@ async function saveData(){
   saveTimer=setTimeout(async()=>{
     setSyncStatus('syncing','opslaan...');
     try{
+      // Always fetch latest sha before saving to prevent 409 conflicts
+      const getR=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,{headers:{Authorization:'token '+ghConfig.token,Accept:'application/vnd.github.v3+json'}});
+      if(getR.ok){const getJ=await getR.json();dataSha=getJ.sha;}
+      else if(getR.status===404){dataSha=null;}
+      else throw new Error('fetch sha failed: '+getR.status);
       const content=btoa(unescape(encodeURIComponent(JSON.stringify({version:1,updated:new Date().toISOString(),transactions,goals},null,2))));
       const body={message:'Update '+new Date().toISOString().slice(0,10),content};
       if(dataSha)body.sha=dataSha;
