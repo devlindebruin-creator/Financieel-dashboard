@@ -185,19 +185,27 @@ input:focus,select:focus{border-color:var(--accent)}
   body{overflow-x:hidden}
   .main{padding:12px}
   .header{padding:10px 12px}
-  .header-right{width:100%}
+  .header-right{width:100%;flex-direction:column;align-items:flex-start;gap:8px}
   .nav-tabs{width:100%}
   .nav-tab{flex:1;text-align:center;padding:6px 4px;font-size:12px}
-  .toolbar-btns{gap:4px}
+  .toolbar-btns{gap:4px;flex-wrap:wrap}
   .toolbar-btn{padding:5px 8px;font-size:11px}
   .summary-grid{grid-template-columns:1fr;gap:10px}
   .content-grid{grid-template-columns:1fr}
-  .analysis-grid{grid-template-columns:1fr}
-  .insight-row{grid-template-columns:1fr 1fr;gap:10px}
+  .analysis-grid{grid-template-columns:1fr !important}
+  .insight-row{grid-template-columns:1fr 1fr;gap:8px}
+  .insight-card .i-val{font-size:18px}
+  .insight-card{padding:12px}
   .form-row{grid-template-columns:1fr}
   .period-row{flex-direction:column;align-items:flex-start}
   .modal{padding:18px}
   .setup-card{padding:20px 16px}
+  .card-header{flex-wrap:wrap;gap:8px}
+  .chart-period-tabs{width:100%}
+  .chart-tab{flex:1;text-align:center}
+}
+@media(max-width:400px){
+  .insight-row{grid-template-columns:1fr}
 }
 </style>
 </head>
