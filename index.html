@@ -573,6 +573,13 @@ let CH={};
 
 function getConfig(){try{return JSON.parse(localStorage.getItem('gh_config')||'null');}catch(e){return null;}}
 function setSyncStatus(s,t){document.getElementById('syncDot').className='sync-dot '+s;document.getElementById('syncText').textContent=t;}
+function localDate(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
 function fmt(n){return '€\u00a0'+Math.abs(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function getCat(key){for(const t of['expense','income']){const c=CATS[t].find(c=>c.key===key);if(c)return c;}return{key,label:key,color:'#888'};}
 function showToast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2800);}
@@ -643,7 +650,7 @@ async function saveData(){
       else if(getR.status===404){dataSha=null;}
       else throw new Error('fetch sha failed: '+getR.status);
       const content=btoa(unescape(encodeURIComponent(JSON.stringify({version:1,updated:new Date().toISOString(),transactions,goals},null,2))));
-      const body={message:'Update '+new Date().toISOString().slice(0,10),content};
+      const body={message:'Update '+localDate(new Date()),content};
       if(dataSha)body.sha=dataSha;
       const r=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data.json`,{method:'PUT',headers:{Authorization:'token '+ghConfig.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
       if(!r.ok)throw new Error('status '+r.status);
@@ -817,7 +824,7 @@ function renderTrendChart(start,end){
     const days=['Ma','Di','Wo','Do','Vr','Za','Zo'];
     for(let i=0;i<7;i++){
       const d=new Date(start);d.setDate(d.getDate()+i);
-      const ds=d.toISOString().slice(0,10);
+      const ds=localDate(d);
       labels.push(days[i]);
       const dt=transactions.filter(t=>t.date===ds);
       iD.push(dt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
@@ -890,7 +897,7 @@ function getChartRange(period){
     // Build 7-day labels
     const days=['Ma','Di','Wo','Do','Vr','Za','Zo'];
     const labels=days;
-    const getDayTx=(i)=>{const d=new Date(start);d.setDate(d.getDate()+i);const ds=d.toISOString().slice(0,10);return transactions.filter(t=>t.date===ds);};
+    const getDayTx=(i)=>{const d=new Date(start);d.setDate(d.getDate()+i);const ds=localDate(d);return transactions.filter(t=>t.date===ds);};
     return{period:'week',labels,start,end,getDayTx};
   } else if(period==='month'){
     const yr=now.getFullYear();
@@ -1108,8 +1115,8 @@ function showVerslag(){
   document.getElementById('opt-week-sub').textContent = fmtDate(weekStart)+' – '+fmtDate(weekEnd);
   document.getElementById('opt-month-sub').textContent = monthStart.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
   // Set default dates for custom
-  document.getElementById('verslagFrom').value = monthStart.toISOString().slice(0,10);
-  document.getElementById('verslagTo').value = now.toISOString().slice(0,10);
+  document.getElementById('verslagFrom').value = localDate(monthStart);
+  document.getElementById('verslagTo').value = localDate(now);
   selectVerslagPeriod('week');
   document.getElementById('verslagOverlay').style.display='flex';
 }
@@ -1446,12 +1453,12 @@ function exportCSV(){
   const csv=[h,...rows].map(r=>r.join(';')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='geldstromen-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  const a=document.createElement('a');a.href=url;a.download='geldstromen-'+localDate(new Date())+'.csv';a.click();
   URL.revokeObjectURL(url);showToast('CSV geëxporteerd');
 }
 
 fillCats('inputCategory','expense');
-document.getElementById('inputDate').value=new Date().toISOString().slice(0,10);
+document.getElementById('inputDate').value=localDate(new Date());
 loadData().then(()=>{render();});
 // Unregister ALL service workers and clear ALL caches
 if('serviceWorker' in navigator){
