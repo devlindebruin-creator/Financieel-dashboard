@@ -665,7 +665,7 @@ function navigate(d){currentOffset+=d;render();}
 function getDateRange(){
   const now=new Date();let start,end,label;
   if(currentPeriod==='week'){
-    const d=new Date(now);d.setDate(d.getDate()-d.getDay()+1+currentOffset*7);
+    const d=new Date(now);const wd=d.getDay()===0?7:d.getDay();d.setDate(d.getDate()-wd+1+currentOffset*7);
     start=new Date(d);start.setHours(0,0,0,0);
     end=new Date(start);end.setDate(end.getDate()+6);end.setHours(23,59,59,999);
     label=start.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+' – '+end.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
@@ -884,7 +884,8 @@ function toggleInsight(chartId){
 function getChartRange(period){
   const now = new Date();
   if(period==='week'){
-    const start=new Date(now); start.setDate(now.getDate()-now.getDay()+1); start.setHours(0,0,0,0);
+    const dayNum=now.getDay()===0?7:now.getDay();
+    const start=new Date(now); start.setDate(now.getDate()-dayNum+1); start.setHours(0,0,0,0);
     const end=new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
     // Build 7-day labels
     const days=['Ma','Di','Wo','Do','Vr','Za','Zo'];
@@ -1025,7 +1026,8 @@ function renderAvgCatChart(){
   let txPool=[], divisor=1, periodLabel='';
 
   if(period==='week'){
-    const start=new Date(now); start.setDate(now.getDate()-now.getDay()+1); start.setHours(0,0,0,0);
+    const dayNum=now.getDay()===0?7:now.getDay();
+    const start=new Date(now); start.setDate(now.getDate()-dayNum+1); start.setHours(0,0,0,0);
     const end=new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
     txPool=transactions.filter(t=>{const d=new Date(t.date);return d>=start&&d<=end&&t.type==='expense';});
     divisor=1; periodLabel='deze week';
@@ -1095,7 +1097,8 @@ let verslagPeriod = 'week';
 function showVerslag(){
   // Update subtitle labels
   const now = new Date();
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + 1); weekStart.setHours(0,0,0,0);
+  const wDay=now.getDay()===0?7:now.getDay();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - wDay + 1); weekStart.setHours(0,0,0,0);
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth()+1, 0);
@@ -1124,7 +1127,8 @@ function selectVerslagPeriod(p){
 function getVerslagRange(){
   const now = new Date();
   if(verslagPeriod==='week'){
-    const start = new Date(now); start.setDate(now.getDate()-now.getDay()+1); start.setHours(0,0,0,0);
+    const vDay=now.getDay()===0?7:now.getDay();
+    const start = new Date(now); start.setDate(now.getDate()-vDay+1); start.setHours(0,0,0,0);
     const end = new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
     return{start,end,label:'Week '+start.toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'})+' – '+end.toLocaleDateString('nl-NL',{day:'numeric',month:'long'})};
   } else if(verslagPeriod==='month'){
