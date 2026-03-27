@@ -181,31 +181,31 @@ input:focus,select:focus{border-color:var(--accent)}
 .insight-body .insight-highlight{font-weight:500;color:var(--text)}
 .toast{position:fixed;bottom:24px;.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:var(--rs);font-size:13px;font-weight:500;opacity:0;transition:all 0.3s;z-index:300;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:700px){
-  body{overflow-x:hidden}
-  .main{padding:12px}
-  .header{padding:10px 12px}
-  .header-right{width:100%;flex-direction:column;align-items:flex-start;gap:8px}
-  .nav-tabs{width:100%}
-  .nav-tab{flex:1;text-align:center;padding:6px 4px;font-size:12px}
-  .toolbar-btns{gap:4px;flex-wrap:wrap}
-  .toolbar-btn{padding:5px 8px;font-size:11px}
-  .summary-grid{grid-template-columns:1fr;gap:10px}
-  .content-grid{grid-template-columns:1fr}
-  .analysis-grid{grid-template-columns:1fr !important}
-  .insight-row{grid-template-columns:1fr 1fr;gap:8px}
-  .insight-card .i-val{font-size:18px}
-  .insight-card{padding:12px}
-  .form-row{grid-template-columns:1fr}
-  .period-row{flex-direction:column;align-items:flex-start}
-  .modal{padding:18px}
-  .setup-card{padding:20px 16px}
-  .card-header{flex-wrap:wrap;gap:8px}
-  .chart-period-tabs{width:100%}
-  .chart-tab{flex:1;text-align:center}
+@media(max-width:768px){
+  body{overflow-x:hidden !important;max-width:100vw !important}
+  .main{padding:12px !important}
+  .header{padding:10px 12px !important}
+  .header-right{width:100% !important;flex-direction:column !important;align-items:flex-start !important;gap:8px !important}
+  .nav-tabs{width:100% !important}
+  .nav-tab{flex:1 !important;text-align:center !important;padding:6px 4px !important;font-size:12px !important}
+  .toolbar-btns{gap:4px !important;flex-wrap:wrap !important}
+  .toolbar-btn{padding:5px 8px !important;font-size:11px !important}
+  .summary-grid{grid-template-columns:1fr !important;gap:10px !important}
+  .content-grid{grid-template-columns:1fr !important;display:flex !important;flex-direction:column !important}
+  .analysis-grid{grid-template-columns:1fr !important;display:flex !important;flex-direction:column !important}
+  .insight-row{grid-template-columns:1fr 1fr !important;gap:8px !important}
+  .insight-card{padding:12px !important}
+  .insight-card .i-val{font-size:18px !important}
+  .form-row{grid-template-columns:1fr !important}
+  .period-row{flex-direction:column !important;align-items:flex-start !important}
+  .modal{padding:18px !important}
+  .setup-card{padding:20px 16px !important}
+  .card-header{flex-wrap:wrap !important;gap:8px !important}
+  .chart-period-tabs{width:100% !important}
+  .chart-tab{flex:1 !important;text-align:center !important}
 }
 @media(max-width:400px){
-  .insight-row{grid-template-columns:1fr}
+  .insight-row{grid-template-columns:1fr !important}
 }
 </style>
 </head>
