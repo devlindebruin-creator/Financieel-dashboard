@@ -155,6 +155,30 @@ input:focus,select:focus{border-color:var(--accent)}
 .custom-dates .form-group{flex:1;min-width:120px}
 .verslag-actions{display:flex;gap:8px;margin-top:20px}
 .verslag-actions .submit-btn{margin-top:0}
+.chart-period-tabs{display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:6px}
+.chart-tab{padding:4px 10px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.chart-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+.chart-insight{border-top:1px solid var(--border);margin-top:12px}
+.insight-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 0 4px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;text-align:left}
+.insight-toggle:hover{color:var(--text)}
+.insight-arrow{transition:transform 0.2s;flex-shrink:0}
+.insight-arrow.open{transform:rotate(180deg)}
+.insight-body{padding:8px 0 4px;font-size:12px;color:var(--text2);line-height:1.6}
+.insight-body .insight-item{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start}
+.insight-body .insight-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.insight-body .insight-highlight{font-weight:500;color:var(--text)}
+.toast{position:fixed;bottom:24px;.toast{position:fixed;bottom:24px;.chart-period-tabs{display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:6px}
+.chart-tab{padding:4px 10px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.chart-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+.chart-insight{border-top:1px solid var(--border);margin-top:12px}
+.insight-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 0 4px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;text-align:left}
+.insight-toggle:hover{color:var(--text)}
+.insight-arrow{transition:transform 0.2s;flex-shrink:0}
+.insight-arrow.open{transform:rotate(180deg)}
+.insight-body{padding:8px 0 4px;font-size:12px;color:var(--text2);line-height:1.6}
+.insight-body .insight-item{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start}
+.insight-body .insight-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.insight-body .insight-highlight{font-weight:500;color:var(--text)}
 .toast{position:fixed;bottom:24px;.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:var(--rs);font-size:13px;font-weight:500;opacity:0;transition:all 0.3s;z-index:300;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:700px){
@@ -426,18 +450,74 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 
   <div class="analysis-grid">
+
+    <!-- Spaarlijn -->
     <div class="card">
-      <div class="card-header"><h3>Maandelijkse spaarlijn</h3></div>
-      <div class="card-body"><div class="chart-wrap tall"><canvas id="monthTrendChart"></canvas></div></div>
+      <div class="card-header">
+        <h3>Spaarlijn</h3>
+        <div class="chart-period-tabs" id="tabs-monthTrend">
+          <button class="chart-tab active" onclick="setChartPeriod('monthTrend','week')">Week</button>
+          <button class="chart-tab" onclick="setChartPeriod('monthTrend','month')">Maand</button>
+          <button class="chart-tab" onclick="setChartPeriod('monthTrend','year')">Jaar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap tall"><canvas id="monthTrendChart"></canvas></div>
+        <div class="chart-insight" id="insight-monthTrend">
+          <button class="insight-toggle" onclick="toggleInsight('monthTrend')">
+            <span>Wat zie ik hier?</span>
+            <svg class="insight-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="insight-body" id="insightBody-monthTrend" style="display:none"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- Inkomsten vs uitgaven -->
     <div class="card">
-      <div class="card-header"><h3>Inkomsten vs uitgaven</h3></div>
-      <div class="card-body"><div class="chart-wrap tall"><canvas id="incExpChart"></canvas></div></div>
+      <div class="card-header">
+        <h3>Inkomsten vs uitgaven</h3>
+        <div class="chart-period-tabs" id="tabs-incExp">
+          <button class="chart-tab active" onclick="setChartPeriod('incExp','week')">Week</button>
+          <button class="chart-tab" onclick="setChartPeriod('incExp','month')">Maand</button>
+          <button class="chart-tab" onclick="setChartPeriod('incExp','year')">Jaar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap tall"><canvas id="incExpChart"></canvas></div>
+        <div class="chart-insight" id="insight-incExp">
+          <button class="insight-toggle" onclick="toggleInsight('incExp')">
+            <span>Wat zie ik hier?</span>
+            <svg class="insight-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="insight-body" id="insightBody-incExp" style="display:none"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- Categorie -->
     <div class="card">
-      <div class="card-header"><h3>Gemiddeld per categorie / maand</h3></div>
-      <div class="card-body"><div class="chart-wrap tall"><canvas id="avgCatChart"></canvas></div></div>
+      <div class="card-header">
+        <h3>Uitgaven per categorie</h3>
+        <div class="chart-period-tabs" id="tabs-avgCat">
+          <button class="chart-tab active" onclick="setChartPeriod('avgCat','week')">Week</button>
+          <button class="chart-tab" onclick="setChartPeriod('avgCat','month')">Maand</button>
+          <button class="chart-tab" onclick="setChartPeriod('avgCat','year')">Jaar</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap tall"><canvas id="avgCatChart"></canvas></div>
+        <div class="chart-insight" id="insight-avgCat">
+          <button class="insight-toggle" onclick="toggleInsight('avgCat')">
+            <span>Wat zie ik hier?</span>
+            <svg class="insight-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="insight-body" id="insightBody-avgCat" style="display:none"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- Spaardoelen -->
     <div class="card">
       <div class="card-header">
         <h3>Spaardoelen</h3>
@@ -445,6 +525,7 @@ input:focus,select:focus{border-color:var(--accent)}
       </div>
       <div class="card-body" id="goalsList"><div class="empty-state" style="padding:16px"><div class="empty-icon">🎯</div>Nog geen spaardoelen</div></div>
     </div>
+
   </div>
 </div>
 
@@ -768,6 +849,52 @@ function renderCatChart(txs){
   }).join('');
 }
 
+// ── CHART PERIOD STATE ───────────────────────────────────
+const chartPeriods = {monthTrend:'month', incExp:'month', avgCat:'month'};
+
+function setChartPeriod(chartId, period){
+  chartPeriods[chartId] = period;
+  document.querySelectorAll('#tabs-'+chartId+' .chart-tab').forEach((btn,i)=>{
+    btn.classList.toggle('active', ['week','month','year'][i]===period);
+  });
+  if(chartId==='monthTrend') renderMonthTrend();
+  else if(chartId==='incExp') renderIncExpChart();
+  else if(chartId==='avgCat') renderAvgCatChart();
+}
+
+function toggleInsight(chartId){
+  const body = document.getElementById('insightBody-'+chartId);
+  const arrow = document.querySelector('#insight-'+chartId+' .insight-arrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.classList.toggle('open', !isOpen);
+}
+
+function getChartRange(period){
+  const now = new Date();
+  if(period==='week'){
+    const start=new Date(now); start.setDate(now.getDate()-now.getDay()+1); start.setHours(0,0,0,0);
+    const end=new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
+    // Build 7-day labels
+    const days=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+    const labels=days;
+    const getDayTx=(i)=>{const d=new Date(start);d.setDate(d.getDate()+i);const ds=d.toISOString().slice(0,10);return transactions.filter(t=>t.date===ds);};
+    return{period:'week',labels,start,end,getDayTx};
+  } else if(period==='month'){
+    const yr=now.getFullYear();
+    const labels=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+    const getMonthTx=(m)=>transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
+    return{period:'month',labels,yr,getMonthTx};
+  } else {
+    // Last 4 years
+    const curYr=now.getFullYear();
+    const years=[curYr-3,curYr-2,curYr-1,curYr];
+    const labels=years.map(String);
+    const getYearTx=(y)=>transactions.filter(t=>new Date(t.date).getFullYear()===y);
+    return{period:'year',labels,years,getYearTx};
+  }
+}
+
 function renderAnalysis(){renderInsights();renderMonthTrend();renderIncExpChart();renderAvgCatChart();renderGoals();}
 
 function renderInsights(){
@@ -790,41 +917,141 @@ function renderInsights(){
 
 function renderMonthTrend(){
   destroyChart('monthTrend');
-  const yr=new Date().getFullYear();
-  const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
-  const saving=mn.map((_,m)=>{
-    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
-    return mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  });
-  CH['monthTrend']=new Chart(document.getElementById('monthTrendChart'),{type:'line',data:{labels:mn,datasets:[{label:'Spaarsaldo',data:saving,borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,0.1)',fill:true,tension:0.4,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:'#2d6a4f'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.parsed.y<0?'– ':'')+fmt(ctx.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:11},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+  const period = chartPeriods['monthTrend'];
+  const range = getChartRange(period);
+  let labels=[], saving=[];
+
+  if(period==='week'){
+    labels = range.labels;
+    saving = [0,1,2,3,4,5,6].map(i=>{
+      const tx=range.getDayTx(i);
+      return tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    });
+  } else if(period==='month'){
+    labels = range.labels;
+    saving = range.labels.map((_,m)=>{
+      const tx=range.getMonthTx(m);
+      return tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    });
+  } else {
+    labels = range.labels;
+    saving = range.years.map(y=>{
+      const tx=range.getYearTx(y);
+      return tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    });
+  }
+
+  CH['monthTrend']=new Chart(document.getElementById('monthTrendChart'),{type:'line',data:{labels,datasets:[{label:'Spaarsaldo',data:saving,borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,0.1)',fill:true,tension:0.4,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:'#2d6a4f'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.parsed.y<0?'– ':'')+fmt(ctx.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:11},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+
+  // Insight genereren
+  const positief = saving.filter(v=>v>0).length;
+  const negatief = saving.filter(v=>v<0).length;
+  const max = Math.max(...saving); const maxIdx = saving.indexOf(max);
+  const min = Math.min(...saving); const minIdx = saving.indexOf(min);
+  const avg = saving.length ? saving.reduce((a,b)=>a+b,0)/saving.length : 0;
+  const items = [];
+  if(avg > 0) items.push({color:'#2d6a4f', text:`Gemiddeld spaar je <span class="insight-highlight">${fmt(avg)}</span> per periode.`});
+  else if(avg < 0) items.push({color:'#c1440e', text:`Gemiddeld geef je <span class="insight-highlight">${fmt(Math.abs(avg))}</span> meer uit dan je verdient per periode.`});
+  if(max > 0) items.push({color:'#2d6a4f', text:`Beste periode: <span class="insight-highlight">${labels[maxIdx]}</span> met ${fmt(max)} gespaard.`});
+  if(min < 0) items.push({color:'#c1440e', text:`Slechtste periode: <span class="insight-highlight">${labels[minIdx]}</span> met ${fmt(Math.abs(min))} tekort.`});
+  if(positief > 0 && negatief > 0) items.push({color:'#8b6914', text:`${positief} van de ${saving.length} periodes waren positief, ${negatief} negatief.`});
+  document.getElementById('insightBody-monthTrend').innerHTML = items.map(i=>`<div class="insight-item"><div class="insight-dot" style="background:${i.color}"></div><div>${i.text}</div></div>`).join('') || '<div style="color:var(--text3)">Voeg transacties toe om inzichten te zien.</div>';
 }
 
 function renderIncExpChart(){
   destroyChart('incExp');
-  const yr=new Date().getFullYear();
-  const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
-  const inc=[],exp=[];
-  mn.forEach((_,m)=>{
-    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
-    inc.push(mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
-    exp.push(mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
-  });
-  CH['incExp']=new Chart(document.getElementById('incExpChart'),{type:'bar',data:{labels:mn,datasets:[
+  const period = chartPeriods['incExp'];
+  const range = getChartRange(period);
+  let labels=[], inc=[], exp=[];
+
+  if(period==='week'){
+    labels=range.labels;
+    [0,1,2,3,4,5,6].forEach(i=>{
+      const tx=range.getDayTx(i);
+      inc.push(tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+      exp.push(tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+    });
+  } else if(period==='month'){
+    labels=range.labels;
+    range.labels.forEach((_,m)=>{
+      const tx=range.getMonthTx(m);
+      inc.push(tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+      exp.push(tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+    });
+  } else {
+    labels=range.labels;
+    range.years.forEach(y=>{
+      const tx=range.getYearTx(y);
+      inc.push(tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+      exp.push(tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+    });
+  }
+
+  CH['incExp']=new Chart(document.getElementById('incExpChart'),{type:'bar',data:{labels,datasets:[
     {label:'Inkomsten',data:inc,backgroundColor:'rgba(45,106,79,0.75)',borderRadius:3,borderSkipped:false},
     {label:'Uitgaven',data:exp,backgroundColor:'rgba(193,68,14,0.75)',borderRadius:3,borderSkipped:false}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('nl-NL',{style:'currency',currency:'EUR'})}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#9e9890'}},y:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:10},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+
+  // Insight genereren
+  const totalInc=inc.reduce((a,b)=>a+b,0);
+  const totalExp=exp.reduce((a,b)=>a+b,0);
+  const ratio=totalInc>0?Math.round(totalExp/totalInc*100):0;
+  const bestIdx=inc.map((v,i)=>v-exp[i]).indexOf(Math.max(...inc.map((v,i)=>v-exp[i])));
+  const worstIdx=exp.indexOf(Math.max(...exp));
+  const items=[];
+  items.push({color:'#8b6914', text:`Je geeft gemiddeld <span class="insight-highlight">${ratio}%</span> van je inkomsten uit.`});
+  if(totalInc>totalExp) items.push({color:'#2d6a4f', text:`Over deze periode hield je <span class="insight-highlight">${fmt(totalInc-totalExp)}</span> over.`});
+  else if(totalExp>totalInc) items.push({color:'#c1440e', text:`Over deze periode gaf je <span class="insight-highlight">${fmt(totalExp-totalInc)}</span> meer uit dan je verdiende.`});
+  if(inc[bestIdx]>0) items.push({color:'#2d6a4f', text:`Beste periode: <span class="insight-highlight">${labels[bestIdx]}</span> — hoogste overschot.`});
+  if(exp[worstIdx]>0) items.push({color:'#c1440e', text:`Hoogste uitgaven: <span class="insight-highlight">${labels[worstIdx]}</span> met ${fmt(exp[worstIdx])}.`});
+  document.getElementById('insightBody-incExp').innerHTML = items.map(i=>`<div class="insight-item"><div class="insight-dot" style="background:${i.color}"></div><div>${i.text}</div></div>`).join('') || '<div style="color:var(--text3)">Voeg transacties toe om inzichten te zien.</div>';
 }
 
 function renderAvgCatChart(){
   destroyChart('avgCat');
-  const yr=new Date().getFullYear();
-  const yt=transactions.filter(t=>new Date(t.date).getFullYear()===yr&&t.type==='expense');
-  const months=new Set(yt.map(t=>new Date(t.date).getMonth())).size||1;
+  const period = chartPeriods['avgCat'];
+  const now = new Date();
+  let txPool=[], divisor=1, periodLabel='';
+
+  if(period==='week'){
+    const start=new Date(now); start.setDate(now.getDate()-now.getDay()+1); start.setHours(0,0,0,0);
+    const end=new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
+    txPool=transactions.filter(t=>{const d=new Date(t.date);return d>=start&&d<=end&&t.type==='expense';});
+    divisor=1; periodLabel='deze week';
+  } else if(period==='month'){
+    const yr=now.getFullYear();
+    txPool=transactions.filter(t=>new Date(t.date).getFullYear()===yr&&t.type==='expense');
+    divisor=new Set(txPool.map(t=>new Date(t.date).getMonth())).size||1;
+    periodLabel='gemiddeld per maand';
+  } else {
+    txPool=transactions.filter(t=>t.type==='expense');
+    const yrs=new Set(txPool.map(t=>new Date(t.date).getFullYear()));
+    divisor=yrs.size||1; periodLabel='gemiddeld per jaar';
+  }
+
   const bycat={};
-  yt.forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
+  txPool.forEach(t=>{bycat[t.category]=(bycat[t.category]||0)+t.amount;});
   const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,7);
-  if(!sorted.length)return;
-  CH['avgCat']=new Chart(document.getElementById('avgCatChart'),{type:'bar',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{label:'Gem./maand',data:sorted.map(([,v])=>Math.round(v/months*100)/100),backgroundColor:sorted.map(([k])=>getCat(k).color),borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' €'+ctx.parsed.x.toLocaleString('nl-NL',{minimumFractionDigits:2})}}},scales:{x:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:10},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}},y:{grid:{display:false},ticks:{font:{size:10},color:'#9e9890'}}}}});
+
+  if(!sorted.length){
+    document.getElementById('insightBody-avgCat').innerHTML='<div style="color:var(--text3)">Geen uitgavendata voor deze periode.</div>';
+    return;
+  }
+
+  const data=sorted.map(([,v])=>Math.round(v/divisor*100)/100);
+  CH['avgCat']=new Chart(document.getElementById('avgCatChart'),{type:'bar',data:{labels:sorted.map(([k])=>getCat(k).label),datasets:[{label:periodLabel,data,backgroundColor:sorted.map(([k])=>getCat(k).color),borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' €'+ctx.parsed.x.toLocaleString('nl-NL',{minimumFractionDigits:2})}}},scales:{x:{grid:{color:'rgba(128,128,128,0.12)'},ticks:{font:{size:10},color:'#9e9890',callback:v=>'€'+v.toLocaleString('nl-NL')}},y:{grid:{display:false},ticks:{font:{size:10},color:'#9e9890'}}}}});
+
+  // Insight genereren
+  const total=data.reduce((a,b)=>a+b,0);
+  const topCat=getCat(sorted[0][0]).label;
+  const topPct=total>0?Math.round(data[0]/total*100):0;
+  const top2=sorted.slice(0,2).map(([k])=>getCat(k).label).join(' en ');
+  const top2pct=total>0?Math.round((data[0]+(data[1]||0))/total*100):0;
+  const items=[];
+  items.push({color:'#c1440e', text:`<span class="insight-highlight">${topCat}</span> is je grootste kostenpost: ${topPct}% van je totale uitgaven.`});
+  if(sorted.length>=2) items.push({color:'#8b6914', text:`${top2} samen zijn goed voor <span class="insight-highlight">${top2pct}%</span> van je uitgaven.`});
+  items.push({color:'#185fa5', text:`Je geeft ${periodLabel} in totaal <span class="insight-highlight">${fmt(total)}</span> uit verspreid over ${sorted.length} categorieën.`});
+  document.getElementById('insightBody-avgCat').innerHTML = items.map(i=>`<div class="insight-item"><div class="insight-dot" style="background:${i.color}"></div><div>${i.text}</div></div>`).join('');
 }
 
 function renderGoals(){
