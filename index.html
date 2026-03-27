@@ -983,7 +983,9 @@ function downloadVerslag(){
 
     y += 18;
     const maxVal = topCats[0]?.[1] || 1;
-    const barMaxW = W - margin*2 - 80;
+    const amtColW = 32;
+    const barStartX = margin+70;
+    const barMaxW = W - margin*2 - 70 - amtColW - 6;
 
     topCats.forEach(([k,v],i)=>{
       const cat = getCat(k);
@@ -1004,17 +1006,18 @@ function downloadVerslag(){
       doc.setTextColor(107,101,96);
       doc.text(cat.label, margin+18, rowY+5);
 
-      // Bar
+      // Background bar
       doc.setFillColor(240,236,228);
-      doc.roundedRect(margin+70, rowY, barMaxW, 6, 1, 1, 'F');
+      doc.roundedRect(barStartX, rowY, barMaxW, 6, 1, 1, 'F');
+      // Filled bar
       doc.setFillColor(r,g,b);
-      doc.roundedRect(margin+70, rowY, barW, 6, 1, 1, 'F');
+      doc.roundedRect(barStartX, rowY, barW, 6, 1, 1, 'F');
 
-      // Amount
+      // Amount — always to the right of the bar area, never overlapping
       doc.setFontSize(9);
       doc.setFont('helvetica','bold');
       doc.setTextColor(26,23,20);
-      doc.text(fmt(v), W-margin-2, rowY+5, {align:'right'});
+      doc.text(fmt(v), barStartX + barMaxW + amtColW, rowY+5, {align:'right'});
     });
     y += topCats.length*12 + 12;
   }
@@ -1103,6 +1106,85 @@ function downloadVerslag(){
   doc.setTextColor(107,101,96);
   doc.text('Geldstromen Dashboard · Persoonlijk financieel overzicht', margin, H-5);
   doc.text('© '+new Date().getFullYear(), W-margin, H-5, {align:'right'});
+
+  // ── GRAFIEK PAGINA ──
+  doc.addPage();
+  doc.setFillColor(245,242,237);
+  doc.rect(0,0,W,H,'F');
+
+  // Pagina header
+  doc.setFillColor(26,23,20);
+  doc.rect(0,0,W,18,'F');
+  doc.setFontSize(10);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(240,236,228);
+  doc.text('Geldstromen — Analyse', margin, 12);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(107,101,96);
+  doc.text(label, W-margin, 12, {align:'right'});
+
+  // Maandelijkse trend grafiek
+  const trendCanvas = document.createElement('canvas');
+  trendCanvas.width=800; trendCanvas.height=300;
+  const mn=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const yr=new Date().getFullYear();
+  const incArr=[],expArr=[];
+  mn.forEach((_,m)=>{
+    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
+    incArr.push(mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+    expArr.push(mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+  });
+  const tChart = new Chart(trendCanvas,{type:'bar',data:{labels:mn,datasets:[
+    {label:'Inkomsten',data:incArr,backgroundColor:'rgba(45,106,79,0.8)',borderRadius:4,borderSkipped:false},
+    {label:'Uitgaven',data:expArr,backgroundColor:'rgba(193,68,14,0.8)',borderRadius:4,borderSkipped:false}
+  ]},options:{responsive:false,animation:false,plugins:{legend:{display:true,labels:{font:{size:14},color:'#1a1714'}},title:{display:true,text:'Inkomsten vs Uitgaven '+yr,font:{size:16,weight:'bold'},color:'#1a1714',padding:{bottom:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:12},color:'#6b6560'}},y:{grid:{color:'rgba(0,0,0,0.08)'},ticks:{font:{size:11},color:'#6b6560',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+  const trendImg = trendCanvas.toDataURL('image/png');
+  tChart.destroy();
+
+  doc.setFillColor(255,255,255);
+  doc.roundedRect(margin,24,W-margin*2,82,3,3,'F');
+  doc.addImage(trendImg,'PNG',margin+4,26,W-margin*2-8,78);
+
+  // Spaarlijn grafiek
+  const savCanvas = document.createElement('canvas');
+  savCanvas.width=800; savCanvas.height=300;
+  const savData = mn.map((_,m)=>{
+    const mt=transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()===m;});
+    return mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)-mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  });
+  const sChart = new Chart(savCanvas,{type:'line',data:{labels:mn,datasets:[{label:'Maandelijks spaarsaldo',data:savData,borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,0.12)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#2d6a4f'}]},options:{responsive:false,animation:false,plugins:{legend:{display:true,labels:{font:{size:14},color:'#1a1714'}},title:{display:true,text:'Maandelijkse spaarlijn '+yr,font:{size:16,weight:'bold'},color:'#1a1714',padding:{bottom:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:12},color:'#6b6560'}},y:{grid:{color:'rgba(0,0,0,0.08)'},ticks:{font:{size:11},color:'#6b6560',callback:v=>'€'+v.toLocaleString('nl-NL')}}}}});
+  const savImg = savCanvas.toDataURL('image/png');
+  sChart.destroy();
+
+  doc.setFillColor(255,255,255);
+  doc.roundedRect(margin,112,W-margin*2,82,3,3,'F');
+  doc.addImage(savImg,'PNG',margin+4,114,W-margin*2-8,78);
+
+  // Categorie grafiek (horizontaal)
+  if(topCats.length > 0){
+    const catCanvas = document.createElement('canvas');
+    catCanvas.width=800; catCanvas.height=320;
+    const catColors = topCats.map(([k])=>getCat(k).color);
+    const cChart = new Chart(catCanvas,{type:'bar',data:{labels:topCats.map(([k])=>getCat(k).label),datasets:[{label:'Gemiddeld/maand (€)',data:topCats.map(([,v])=>{
+      const months=new Set(transactions.filter(t=>new Date(t.date).getFullYear()===yr&&t.type==='expense').map(t=>new Date(t.date).getMonth())).size||1;
+      return Math.round(v/months*100)/100;
+    }),backgroundColor:catColors,borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:false,animation:false,plugins:{legend:{display:false},title:{display:true,text:'Gemiddelde uitgave per categorie per maand',font:{size:16,weight:'bold'},color:'#1a1714',padding:{bottom:12}}},scales:{x:{grid:{color:'rgba(0,0,0,0.08)'},ticks:{font:{size:11},color:'#6b6560',callback:v=>'€'+v.toLocaleString('nl-NL')}},y:{grid:{display:false},ticks:{font:{size:12},color:'#6b6560'}}}}});
+    const catImg = catCanvas.toDataURL('image/png');
+    cChart.destroy();
+
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(margin,200,W-margin*2,82,3,3,'F');
+    doc.addImage(catImg,'PNG',margin+4,202,W-margin*2-8,78);
+  }
+
+  // Footer pagina 2
+  doc.setFillColor(26,23,20);
+  doc.rect(0,H-14,W,14,'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(107,101,96);
+  doc.text('Geldstromen Dashboard · Persoonlijk financieel overzicht', margin, H-5);
+  doc.text('Pagina 2 / 2', W-margin, H-5, {align:'right'});
 
   // Download
   const filename = 'Geldstromen-verslag-'+label.replace(/[^a-zA-Z0-9]/g,'-').replace(/-+/g,'-')+'.pdf';
