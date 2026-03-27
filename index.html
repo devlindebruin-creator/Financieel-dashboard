@@ -65,7 +65,7 @@ h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
 .period-tabs{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:var(--rs)}
 .period-tab{padding:5px 14px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border-radius:5px;cursor:pointer;transition:all 0.15s}
 .period-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px}
 .summary-card .lbl{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
 .summary-card .amt{font-family:'DM Serif Display',serif;font-size:26px;line-height:1.1}
@@ -74,7 +74,7 @@ h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
 .summary-card .amt.pos{color:var(--income)}
 .summary-card .amt.neg{color:var(--expense)}
 .summary-card .sub{font-size:11px;color:var(--text3);margin-top:3px}
-.content-grid{display:grid;grid-template-columns:1fr minmax(0,340px);gap:18px;align-items:start}
+.content-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .card-header h3{font-family:'DM Serif Display',serif;font-size:15px;font-weight:400}
@@ -118,8 +118,8 @@ input:focus,select:focus{border-color:var(--accent)}
 .cat-bar-wrap{width:70px;height:4px;background:var(--surface2);border-radius:2px}
 .cat-bar{height:4px;border-radius:2px}
 .cat-amount{font-weight:500;min-width:56px;text-align:right}
-.analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.insight-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.insight-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
 .insight-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
 .insight-card .i-label{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
 .insight-card .i-val{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.1}
