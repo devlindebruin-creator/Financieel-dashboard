@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-27T13:07:48.333Z",
+  "updated": "2026-03-28T09:21:16.866Z",
   "transactions": [
+    {
+      "id": 1774689676056.7234,
+      "type": "expense",
+      "amount": 60.11,
+      "date": "2026-03-28",
+      "category": "boodschappen",
+      "desc": "Boodschappen AH pasta pesto (52eu koopzegels ingeleverd)"
+    },
     {
       "id": 1774547911495.023,
       "type": "expense",
