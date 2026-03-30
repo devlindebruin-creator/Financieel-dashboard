@@ -1,7 +1,15 @@
 {
   "version": 1,
-  "updated": "2026-03-28T09:21:16.866Z",
+  "updated": "2026-03-30T06:39:47.157Z",
   "transactions": [
+    {
+      "id": 1774852786350.249,
+      "type": "expense",
+      "amount": 19.99,
+      "date": "2026-03-29",
+      "category": "boodschappen",
+      "desc": "Jumbo"
+    },
     {
       "id": 1774689676056.7234,
       "type": "expense",
